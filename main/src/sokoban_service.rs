@@ -1,4 +1,6 @@
+use crate::command_service::{get_user_input, is_valid_input, QUIT};
 use crate::file_service::{FileError, read_file, validate_file};
+use crate::user_interface::user_goodbye;
 use crate::user_welcome;
 
 #[derive(Debug)]
@@ -24,5 +26,17 @@ pub fn play(map: &String) -> Result<(), FileError> {
     };
 
     validate_file(input_file)?;
+
+    loop {
+        let input: String = get_user_input();
+        if input == QUIT {
+            user_goodbye();
+            break;
+        }
+    }
+
     Ok(())
 }
+
+
+
