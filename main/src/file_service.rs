@@ -1,11 +1,8 @@
 use std::fs::File;
 use std::io::Read;
 use std::ops::Add;
-
-pub const WALL_U8: u8 = 35;
-pub const BOX_U8: u8 = 61;
-pub const TARGET_U8: u8 = 43;
-pub const ENTER_U8: u8 = 10;
+use std::io;
+use crate::utils::{BOX_U8, ENTER_U8, TARGET_U8, WALL_U8};
 
 #[derive(Debug)]
 pub enum FileError {
@@ -18,7 +15,7 @@ pub fn read_file(path: &String) -> Result<String, FileError> {
     let f = File::open(path);
 
     let mut f = match f {
-        Ok(file) => file,
+        Ok(archivo) => archivo,
         Err(error) => return Err(FileError::ReadError(error.to_string())),
     };
 
@@ -39,4 +36,15 @@ pub fn validate_file(file: String) -> Result<String, FileError> {
         }
     }
     Ok(file)
+}
+
+pub fn get_command() -> Result<String, FileError> {
+    let mut command: String = String::new();
+    match io::stdin()
+        .read_line(&mut command){
+        Ok(c) => c,
+        Err(error) => return Err(FileError::ReadError(error.to_string())),
+    };
+
+    Ok(command)
 }
