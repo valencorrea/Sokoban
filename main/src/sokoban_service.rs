@@ -1,19 +1,22 @@
 use std::fmt::Debug;
-use crate::command_service::{get_user_input, move_player, QUIT};
+use std::slice::SliceIndex;
+use crate::command_service::{get_user_input, QUIT};
 use crate::file_service::{FileError, read_file, validate_file};
+use crate::movement_service::{move_player/*, process_move*/};
 use crate::user_interface::{mostrar_mapa, show_goodbye, show_victory};
 use crate::show_welcome;
-use crate::utils::{BOX_STR, BOX_U8, ENTER_U8, TARGET_STR, TARGET_U8};
+use crate::utils::{BOX_STR, BOX_U8, ENTER_STR, ENTER_U8, TARGET_STR, TARGET_U8};
 
 #[derive(Debug)]
 pub enum SokobanError {
     CoordError(String),
+    FileError(String),
 }
 
 #[derive(Debug)]
 pub struct Coord {
-    x: u8,
-    y: u8,
+    pub x: u8,
+    pub y: u8,
 }
 
 #[derive(Debug)]
@@ -25,11 +28,11 @@ pub enum Move {
 }
 
 #[derive(Debug)]
-struct Sokoban {
-    //map: Vec<Vec<u8>>,
-    user_coords: Coord,
-    boxes_coords: Vec<Coord>,
-    target_coords: Vec<Coord>,
+pub struct Sokoban {
+    map: Vec<Vec<u8>>,
+    pub user_coords: Coord,
+    pub boxes_coords: Vec<Coord>,
+    pub target_coords: Vec<Coord>,
     rows: usize,
     columns: usize,
 }
@@ -64,25 +67,56 @@ pub fn get_coords(mut coords: String, object: &str, rows: usize, columns: usize)
     sokoban
 }*/
 
+pub fn delete_enters(input: String) -> String {
+    let mut output: String = String::new();
+    for i in input.chars() {
+        if i.to_string() != ENTER_STR {
+            output.push_str(&*i.to_string());
+        }
+    }
+    output
+}
+
+pub fn create_map(mut input: String, rows: usize, columns: usize) -> Vec<Vec<u8>> {
+    let mut map = vec![vec![0; columns]; rows];
+    let mut row = 0;
+    let mut column = 0;
+
+    input = delete_enters(input);
+
+    while row < rows && !input.is_empty() {
+        map[row][column] = input.remove(0) as u8; // todo mencionar casteos
+        if column == columns - 1 {
+            column = 0;
+            row += 1;
+        } else {
+            column += 1;
+        }
+    }
+    map
+}
+
+
 // todo mencionar como ventaja el que pueden ser estaticos o mutables
 // todo otra ventaja lifetimes? usarlo en algun lado
 impl Sokoban {
-    pub fn new(map: String, rows: usize, columns: usize) -> Result<Self, SokobanError> {
-        let mut sokoban = vec![vec![0; columns]; rows];
+    pub fn new(input: String, rows: usize, columns: usize) -> Result<Self, SokobanError> {
+        let map = create_map(input.clone(), rows, columns); // todo mencionar desventajas
 
-        let boxes_coords = match get_coords(map.clone(), BOX_STR, rows, columns){
+        let boxes_coords = match get_coords(input.clone(), BOX_STR, rows, columns){
             Ok(b) => b,
             Err(err) => return Err(err)
         };
-        let target_coords = match get_coords(map.clone(), TARGET_STR, rows, columns){
+        let target_coords = match get_coords(input.clone(), TARGET_STR, rows, columns){
             Ok(t) => t,
             Err(err) => return Err(err)
         };
+
         //sokoban = initialize_coords(sokoban, &boxes_coords, BOX_U8);
         //sokoban = initialize_coords(sokoban, &target_coords, TARGET_U8);
 
          Ok(Sokoban {
-            //map: sokoban,
+            map,
             user_coords: Coord { x: 0, y: 0},
             boxes_coords,
             target_coords,
@@ -107,32 +141,36 @@ pub fn columns(total_bytes: usize, rows: &usize) -> usize {
     (total_bytes / rows) - 1
 }
 
-pub fn play(input: &String) -> Result<(), FileError> {
+// todo refactorizar
+pub fn play(input: &String) -> Result<(), SokobanError> {
     show_welcome();
 
     let mut map = match read_file(input) {
         Ok(result) => result,
-        Err(error) => return Err(error),
+        Err(error) => return Err(SokobanError::FileError("err".to_string())),
     };
     validate_file(&map)?;
     mostrar_mapa(&map);
 
     let rows = rows(map.as_bytes());
-    let columns = columns(input.len(), &rows);
-    let mut sokoban = Sokoban::new(map, rows, columns);
+    let columns = columns(map.len(), &rows);
+    let mut sokoban = match Sokoban::new(map, rows, columns){
+        Ok(s) => s,
+        Err(err) => return Err(err)
+    };
+
     println!("{:?}", sokoban);
-/*
     loop {
         let input = match get_user_input() {
             Ok(i) => i,
-            Err(_) => return Err(FileError::ReadError(String::from("Error while getting user input.\n"))),
+            Err(err) => return Err(SokobanError::FileError("err".to_string())),
         };
         if input == QUIT {
             show_goodbye();
             break;
         }
         let movement: Move = move_player(&input);
-        //process_move(&map, &mut boxes_coords, &mut player_coords, movement);
+        //process_move(&sokoban, movement);
         //print_map(&map, &boxes_coords, &boxes_targets, &player_coords);
 
         if true {//victory(&boxes_coords, &boxes_targets) {
@@ -140,7 +178,7 @@ pub fn play(input: &String) -> Result<(), FileError> {
             break;
         }
     }
-*/
+
     show_goodbye();
     Ok(())
 }

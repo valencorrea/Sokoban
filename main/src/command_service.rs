@@ -2,28 +2,11 @@ use crate::sokoban_service::Move;
 use std::io;
 use crate::FileError;
 use crate::user_interface::ask_for_command;
+pub use crate::utils::{DOWN, LEFT, QUIT, RIGHT, UP};
 
-pub const UP: &str = "W";
-pub const DOWN: &str = "S";
-pub const LEFT: &str = "A";
-pub const RIGHT: &str = "D";
-pub const QUIT: &str = "Q";
-
-
+// todo add help command
 pub fn is_valid_input(input: &String) -> bool {
     return input == UP || input == DOWN || input == LEFT || input == RIGHT || input == QUIT;
-}
-
-pub fn move_player(input: &String) -> Move {
-    return if input == UP {
-        Move::Up
-    } else if input == LEFT {
-        Move::Left
-    } else if input == DOWN {
-        Move::Down
-    } else {
-        Move::Right
-    }
 }
 
 pub fn get_user_input() -> Result<String, FileError> {
