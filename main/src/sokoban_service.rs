@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 use std::slice::SliceIndex;
 use crate::command_service::{get_user_input, QUIT};
-use crate::file_service::{FileError, handle_file, read_file, validate_file};
+use crate::file_service::{FileError, read_file, validate_file};
 use crate::map_service::{create_map, get_dimentions};
 use crate::movement_service::{process_input, process_move};
 use crate::ux::{print_map, show_goodbye, show_victory};
@@ -101,13 +101,14 @@ impl Sokoban {
 // todo refactorizar
 pub fn play(input: &String) -> Result<(), SokobanError> {
     show_welcome();
-    let mut map = match handle_file(input){
+    let mut map = match read_file(input) {
         Ok(result) => result,
         Err(error) => return Err(SokobanError::FileError("err".to_string())),
     };
+    validate_file(&map)?;
     print_map(&map.clone()); // todo refactor
 
-    let mut sokoban = match Sokoban::new(map){
+    let mut sokoban = match Sokoban::new(&map){
         Ok(s) => s,
         Err(err) => return Err(err)
     };
