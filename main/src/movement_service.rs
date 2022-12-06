@@ -13,7 +13,7 @@ pub fn process_input(input: &String) -> Move {
     }
 }
 
-pub fn process_move(sokoban: &mut Sokoban, movement: Move){
+pub fn get_deltas(movement: Move) -> (i8, i8){
     let mut delta_x: i8 = 0;
     let mut delta_y: i8 = 0;
 
@@ -22,7 +22,12 @@ pub fn process_move(sokoban: &mut Sokoban, movement: Move){
         Move::Left => delta_x = -1,
         Move::Down => delta_y = 1,
         Move::Right => delta_x = 1,
-    }
+    };
+    (delta_x, delta_y)
+}
+
+pub fn process_move(sokoban: &mut Sokoban, movement: Move){
+    let (delta_x, delta_y) = get_deltas(movement);
 
     let coord_in_direction: Coord = Coord {
         x: (sokoban.user_coords.x as i8 + delta_x) as u8,
