@@ -1,15 +1,15 @@
 use std::env;
-use crate::file_service::FileError;
-use crate::sokoban_service::{play, SokobanError};
-use crate::ux::show_welcome;
 
-mod ux;
+/*mod ux;
 mod sokoban_service;
 mod file_service;
 mod command_service;
 mod utils;
 mod movement_service;
-mod map_service;
+mod map_service;*/
+mod api;
+
+use crate::api::sokoban_service::{play, SokobanError};
 
 
 fn main() -> Result<(), SokobanError> { // todo generalizar error
