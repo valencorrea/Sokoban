@@ -1,43 +1,40 @@
 use crate::sokoban_service::Move;
 use std::io;
+use crate::FileError;
+use crate::ux::ask_for_command;
+pub use crate::utils::{DOWN, LEFT, QUIT, RIGHT, UP};
 
-pub const UP: &str = "W";
-pub const DOWN: &str = "S";
-pub const LEFT: &str = "A";
-pub const RIGHT: &str = "D";
-pub const QUIT: &str = "Q";
-
-
+// todo add help command
 pub fn is_valid_input(input: &String) -> bool {
     return input == UP || input == DOWN || input == LEFT || input == RIGHT || input == QUIT;
 }
 
-pub fn process_input(input: &String) -> Move {
-    return if input == UP {
-        Move::Up
-    } else if input == LEFT {
-        Move::Left
-    } else if input == DOWN {
-        Move::Down
-    } else {
-        Move::Right
-    }
-}
-
-pub fn get_user_input() -> String {
-    let mut input: String = String::new();
+pub fn get_user_input() -> Result<String, FileError> {
+    let mut command: String = String::new();
     loop {
-        input.clear();
-        println!("Escribe tu movimiento (WASD) o Q para cerrar el juego:");
-        io::stdin()
-            .read_line(&mut input)
-            .expect("Failed to read line");
+        command.clear();
+        ask_for_command();
+        command = match get_command() {
+            Ok(c) => c,
+            Err(_) => return Err(FileError::ReadError(String::from("Error while getting user input.\n"))),
+        };
 
-        let trimmed_len: usize = input.trim_end().len();
-        input.truncate(trimmed_len);
-
-        if is_valid_input(&input) {
-            return input;
+        if is_valid_input(&command) {
+            return Ok(command);
         }
     }
 }
+
+fn get_command() -> Result<String, FileError> {
+    let mut command: String = String::new();
+    match io::stdin()
+        .read_line(&mut command) {
+        Ok(c) => c,
+        Err(error) => return Err(FileError::ReadError(error.to_string())),
+    };
+    let trimmed_len: usize = command.trim_end().len();
+    command.truncate(trimmed_len);
+
+    Ok(command)
+}
+

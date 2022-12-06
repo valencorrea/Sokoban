@@ -1,12 +1,11 @@
 use std::fs::File;
 use std::io::Read;
 use std::ops::Add;
+use std::io;
+use crate::sokoban_service::SokobanError;
+use crate::utils::{BOX_U8, ENTER_U8, TARGET_U8, WALL_U8};
 
-pub const WALL_U8: u8 = 35;
-pub const BOX_U8: u8 = 61;
-pub const TARGET_U8: u8 = 43;
-pub const ENTER_U8: u8 = 10;
-
+// deprecado
 #[derive(Debug)]
 pub enum FileError {
     ReadError(String),
@@ -14,12 +13,12 @@ pub enum FileError {
     FormatError(String),
 }
 
-pub fn read_file(path: &String) -> Result<String, FileError> {
+pub fn read_file(path: &String) -> Result<String, SokobanError> {
     let f = File::open(path);
 
     let mut f = match f {
-        Ok(file) => file,
-        Err(error) => return Err(FileError::ReadError(error.to_string())),
+        Ok(archivo) => archivo,
+        Err(error) => return Err(SokobanError::FileError(error.to_string())),
     };
 
     let mut read_file = String::new();
@@ -28,14 +27,14 @@ pub fn read_file(path: &String) -> Result<String, FileError> {
             read_file = read_file.add("\n");
             Ok(read_file)
         }
-        Err(error) => Err(FileError::WriteError(error.to_string())),
+        Err(error) => Err(SokobanError::FileError(error.to_string())),
     }
 }
 
-pub fn validate_file(file: String) -> Result<String, FileError> {
+pub fn validate_file(file: &String) -> Result<&String, SokobanError> {
     for char in file.as_bytes() {
         if (*char != BOX_U8) && (*char != WALL_U8) && (*char != TARGET_U8) && (*char != ENTER_U8) {
-            return Err(FileError::FormatError(String::from("Error en el formato del archivo.")))
+            return Err(SokobanError::FileError(String::from("Error en el formato del archivo.")))
         }
     }
     Ok(file)
