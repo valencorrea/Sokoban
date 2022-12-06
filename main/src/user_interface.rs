@@ -27,3 +27,7 @@ pub fn ask_for_command(){
     // todo: si no te los acordas preisona h
     println!("Escribe tu movimiento o Q para cerrar el juego.")
 }
+
+pub fn mostrar_mapa(mapa: &String) {
+    println!("Mostrando mapa actual...\n\n{}\n", mapa);
+}

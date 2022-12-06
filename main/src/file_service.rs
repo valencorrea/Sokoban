@@ -29,7 +29,7 @@ pub fn read_file(path: &String) -> Result<String, FileError> {
     }
 }
 
-pub fn validate_file(file: String) -> Result<String, FileError> {
+pub fn validate_file(file: &String) -> Result<&String, FileError> {
     for char in file.as_bytes() {
         if (*char != BOX_U8) && (*char != WALL_U8) && (*char != TARGET_U8) && (*char != ENTER_U8) {
             return Err(FileError::FormatError(String::from("Error en el formato del archivo.")))
