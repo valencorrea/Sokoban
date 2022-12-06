@@ -33,8 +33,8 @@ pub struct Sokoban {
     pub user_coords: Coord,
     pub boxes_coords: Vec<Coord>,
     pub target_coords: Vec<Coord>,
-    rows: usize,
-    columns: usize,
+    pub rows: usize,
+    pub columns: usize,
 }
 
 // todo otra ventaja: cargo clippy
