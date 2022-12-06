@@ -2,7 +2,7 @@ use std::fmt::Debug;
 use std::slice::SliceIndex;
 use crate::command_service::{get_user_input, QUIT};
 use crate::file_service::{FileError, read_file, validate_file};
-use crate::movement_service::{move_player/*, process_move*/};
+use crate::movement_service::{process_input, process_move};
 use crate::user_interface::{mostrar_mapa, show_goodbye, show_victory};
 use crate::show_welcome;
 use crate::utils::{BOX_STR, BOX_U8, ENTER_STR, ENTER_U8, TARGET_STR, TARGET_U8};
@@ -29,7 +29,7 @@ pub enum Move {
 
 #[derive(Debug)]
 pub struct Sokoban {
-    map: Vec<Vec<u8>>,
+    pub map: Vec<Vec<u8>>,
     pub user_coords: Coord,
     pub boxes_coords: Vec<Coord>,
     pub target_coords: Vec<Coord>,
@@ -169,8 +169,8 @@ pub fn play(input: &String) -> Result<(), SokobanError> {
             show_goodbye();
             break;
         }
-        let movement: Move = move_player(&input);
-        //process_move(&sokoban, movement);
+        let movement: Move = process_input(&input);
+        process_move(&mut sokoban, movement);
         //print_map(&map, &boxes_coords, &boxes_targets, &player_coords);
 
         if true {//victory(&boxes_coords, &boxes_targets) {
