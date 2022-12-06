@@ -13,5 +13,6 @@ fn main() -> Result<(), SokobanError> { // todo generalizar error
         //Ok(_) => run_app(),
         Ok(_) => Ok(()),
         Err(err) => Err(err)
-    }
+    }.expect("TODO: panic message");
+    run_app()
 }

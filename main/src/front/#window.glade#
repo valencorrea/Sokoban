@@ -90,7 +90,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="channel_name">
+              <object class="GtkLabel" id="sokoban_tittle">
                 <property name="width-request">504</property>
                 <property name="height-request">33</property>
                 <property name="visible">True</property>
