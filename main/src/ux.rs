@@ -28,6 +28,6 @@ pub fn ask_for_command(){
     println!("Escribe tu movimiento o Q para cerrar el juego.")
 }
 
-pub fn mostrar_mapa(mapa: &String) {
+pub fn print_map(mapa: &String) {
     println!("Mostrando mapa actual...\n\n{}\n", mapa);
 }

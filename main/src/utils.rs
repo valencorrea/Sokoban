@@ -13,3 +13,13 @@ pub const DOWN: &str = "S";
 pub const LEFT: &str = "A";
 pub const RIGHT: &str = "D";
 pub const QUIT: &str = "Q";
+
+pub fn delete_enters(input: String) -> String {
+    let mut output: String = String::new();
+    for i in input.chars() {
+        if i.to_string() != ENTER_STR {
+            output.push_str(&*i.to_string());
+        }
+    }
+    output
+}

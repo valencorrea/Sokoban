@@ -13,6 +13,17 @@ pub enum FileError {
     FormatError(String),
 }
 
+pub fn handle_file(input: &String) -> Result<&String, SokobanError> {
+    let mut map = match read_file(input) {
+        Ok(result) => result,
+        Err(error) => return Err(SokobanError::FileError("err".to_string())),
+    };
+    return match validate_file(&map) {
+        Ok(f) => Ok(f),
+        Err(err) => Err(SokobanError::FileError("err".to_string())),
+    };
+}
+
 pub fn read_file(path: &String) -> Result<String, SokobanError> {
     let f = File::open(path);
 
@@ -38,15 +49,4 @@ pub fn validate_file(file: &String) -> Result<&String, SokobanError> {
         }
     }
     Ok(file)
-}
-
-pub fn get_command() -> Result<String, SokobanError> {
-    let mut command: String = String::new();
-    match io::stdin()
-        .read_line(&mut command){
-        Ok(c) => c,
-        Err(error) => return Err(SokobanError::FileError(error.to_string())),
-    };
-
-    Ok(command)
 }

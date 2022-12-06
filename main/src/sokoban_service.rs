@@ -1,11 +1,12 @@
 use std::fmt::Debug;
 use std::slice::SliceIndex;
 use crate::command_service::{get_user_input, QUIT};
-use crate::file_service::{FileError, read_file, validate_file};
+use crate::file_service::{FileError, handle_file, read_file, validate_file};
+use crate::map_service::{create_map, get_dimentions};
 use crate::movement_service::{process_input, process_move};
-use crate::user_interface::{mostrar_mapa, show_goodbye, show_victory};
+use crate::ux::{print_map, show_goodbye, show_victory};
 use crate::show_welcome;
-use crate::utils::{BOX_STR, BOX_U8, ENTER_STR, ENTER_U8, TARGET_STR, TARGET_U8};
+use crate::utils::{BOX_STR, BOX_U8, delete_enters, ENTER_STR, ENTER_U8, TARGET_STR, TARGET_U8};
 
 #[derive(Debug)]
 pub enum SokobanError {
@@ -67,40 +68,11 @@ pub fn get_coords(mut coords: String, object: &str, rows: usize, columns: usize)
     sokoban
 }*/
 
-pub fn delete_enters(input: String) -> String {
-    let mut output: String = String::new();
-    for i in input.chars() {
-        if i.to_string() != ENTER_STR {
-            output.push_str(&*i.to_string());
-        }
-    }
-    output
-}
-
-pub fn create_map(mut input: String, rows: usize, columns: usize) -> Vec<Vec<u8>> {
-    let mut map = vec![vec![0; columns]; rows];
-    let mut row = 0;
-    let mut column = 0;
-
-    input = delete_enters(input);
-
-    while row < rows && !input.is_empty() {
-        map[row][column] = input.remove(0) as u8; // todo mencionar casteos
-        if column == columns - 1 {
-            column = 0;
-            row += 1;
-        } else {
-            column += 1;
-        }
-    }
-    map
-}
-
-
 // todo mencionar como ventaja el que pueden ser estaticos o mutables
 // todo otra ventaja lifetimes? usarlo en algun lado
 impl Sokoban {
-    pub fn new(input: String, rows: usize, columns: usize) -> Result<Self, SokobanError> {
+    pub fn new(input: &String) -> Result<Self, SokobanError> {
+        let (rows, columns) =  get_dimentions(input);
         let map = create_map(input.clone(), rows, columns); // todo mencionar desventajas
 
         let boxes_coords = match get_coords(input.clone(), BOX_STR, rows, columns){
@@ -126,35 +98,16 @@ impl Sokoban {
     }
 }
 
-pub fn rows(bytes: &[u8]) -> usize {
-    let mut rows = 0;
-
-    for row in bytes {
-        if *row == ENTER_U8 {
-            rows += 1;
-        }
-    }
-    rows
-}
-
-pub fn columns(total_bytes: usize, rows: &usize) -> usize {
-    (total_bytes / rows) - 1
-}
-
 // todo refactorizar
 pub fn play(input: &String) -> Result<(), SokobanError> {
     show_welcome();
-
-    let mut map = match read_file(input) {
+    let mut map = match handle_file(input){
         Ok(result) => result,
         Err(error) => return Err(SokobanError::FileError("err".to_string())),
     };
-    validate_file(&map)?;
-    mostrar_mapa(&map.clone());
+    print_map(&map.clone()); // todo refactor
 
-    let rows = rows(map.as_bytes());
-    let columns = columns(map.len(), &rows);
-    let mut sokoban = match Sokoban::new(map, rows, columns){
+    let mut sokoban = match Sokoban::new(map){
         Ok(s) => s,
         Err(err) => return Err(err)
     };

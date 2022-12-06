@@ -1,7 +1,7 @@
 use crate::sokoban_service::Move;
 use std::io;
 use crate::FileError;
-use crate::user_interface::ask_for_command;
+use crate::ux::ask_for_command;
 pub use crate::utils::{DOWN, LEFT, QUIT, RIGHT, UP};
 
 // todo add help command
@@ -37,3 +37,4 @@ fn get_command() -> Result<String, FileError> {
 
     Ok(command)
 }
+
