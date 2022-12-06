@@ -11,6 +11,7 @@ use crate::api::ux::{print_map, show_goodbye, show_victory, show_welcome};
 pub enum SokobanError {
     CoordError(String),
     FileError(String),
+    GTKError(String),
 }
 
 #[derive(Debug)]
