@@ -31,10 +31,10 @@ pub fn get_next_valid_coord(user_coords: &Coord, delta_x: i8, delta_y: i8, rows:
     let mut new_coord_y =  user_coords.y as i8 + delta_y;
 
     // si se va del mapa no lo dejamos hacer el movimiento
-    if (new_coord_x > *columns as i8) || (new_coord_x < 0){
+    if (new_coord_x >= *columns as i8) || (new_coord_x < 0){
         new_coord_x = user_coords.x as i8;
     };
-    if (new_coord_y > *rows as i8) || (new_coord_y < 0){
+    if (new_coord_y >= *rows as i8) || (new_coord_y < 0){
         new_coord_y = user_coords.y as i8;
     };
     Coord{ x: new_coord_x as u8, y: new_coord_y as u8}

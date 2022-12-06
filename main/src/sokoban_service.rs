@@ -150,7 +150,7 @@ pub fn play(input: &String) -> Result<(), SokobanError> {
         Err(error) => return Err(SokobanError::FileError("err".to_string())),
     };
     validate_file(&map)?;
-    mostrar_mapa(&map);
+    mostrar_mapa(&map.clone());
 
     let rows = rows(map.as_bytes());
     let columns = columns(map.len(), &rows);
@@ -159,7 +159,6 @@ pub fn play(input: &String) -> Result<(), SokobanError> {
         Err(err) => return Err(err)
     };
 
-    println!("{:?}", sokoban);
     loop {
         let input = match get_user_input() {
             Ok(i) => i,
@@ -171,8 +170,10 @@ pub fn play(input: &String) -> Result<(), SokobanError> {
         }
         let movement: Move = process_input(&input);
         process_move(&mut sokoban, movement);
+
         //print_map(&map, &boxes_coords, &boxes_targets, &player_coords);
 
+//        if victory(&sokoban) {
         if true {//victory(&boxes_coords, &boxes_targets) {
             show_victory();
             break;
@@ -183,6 +184,20 @@ pub fn play(input: &String) -> Result<(), SokobanError> {
     Ok(())
 }
 
-
+/*fn victory(sokoban: &Sokoban) -> bool {
+    for box_coord in sokoban.boxes_coords {
+        let mut placed: bool = false;
+        for target_coord in sokoban.target_coords {
+            if box_coord.x == target_coord.x && box_coord.y == target_coord.y {
+                placed = true;
+                break;
+            }
+        }
+        if !placed {
+            return false;
+        }
+    }
+    return true;
+}*/
 
 
