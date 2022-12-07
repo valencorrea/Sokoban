@@ -3,7 +3,7 @@ use crate::api::movement_service::{process_input, process_move};
 use crate::api::sokoban_service::{Move, Sokoban, SokobanError};*/
 use std::io::{BufRead, BufReader, Write};
 use std::net::{TcpListener, TcpStream};
-use std::io;
+use std::{io, thread};
 use crate::api::constants::MAP_01;
 
 struct Coord {
@@ -197,13 +197,15 @@ pub fn run() -> std::io::Result<()> {
 
     for stream in listener.incoming() {
         let stream = stream?;
-        handle_client(stream);
+        thread::spawn(move || {
+            handle_client(stream);
+        });
+        
     }
     Ok(())
 }
 
 fn handle_client(stream: TcpStream) {
-    stream.set_nonblocking(false); // FIXME No sé de que sirve esto
     let client_addr = match stream.peer_addr() {
         Ok(sa) => sa.to_string(),
         Err(_) => "Unknown".to_owned(),
