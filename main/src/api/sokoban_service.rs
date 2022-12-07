@@ -1,11 +1,10 @@
-use std::fmt::Debug;
-use std::slice::SliceIndex;
 use crate::api::command_service::get_user_input;
 use crate::api::file_service::{read_file, validate_file};
 use crate::api::map_service::{create_map, get_dimentions};
 use crate::api::movement_service::{process_input, process_move};
 use crate::api::utils::{BOX_STR, QUIT, TARGET_STR};
 use crate::api::ux::{print_map, show_goodbye, show_victory, show_welcome};
+use std::fmt::Debug;
 
 #[derive(Debug)]
 pub enum SokobanError {
@@ -39,14 +38,22 @@ pub struct Sokoban {
 
 // todo otra ventaja: cargo clippy
 //todo revisar
-pub fn get_coords(mut coords: String, object: &str, rows: usize, columns: usize) -> Result<Vec<Coord>, SokobanError> {
+pub fn get_coords(
+    mut coords: String,
+    object: &str,
+    rows: usize,
+    columns: usize,
+) -> Result<Vec<Coord>, SokobanError> {
     let mut row = 0;
     let mut column = 0;
-    let mut coord_vec = vec![Coord{x:0, y:0}]; // todo al final eliminar el primero
+    let mut coord_vec = vec![Coord { x: 0, y: 0 }]; // todo al final eliminar el primero
 
-    while row < rows && !coords.is_empty(){
+    while row < rows && !coords.is_empty() {
         if coords.remove(0).to_string() == object.to_string() {
-            let new_coord = Coord{x: row as u8, y: column as u8};
+            let new_coord = Coord {
+                x: row as u8,
+                y: column as u8,
+            };
             coord_vec.push(new_coord);
         }
         if column == columns - 1 {
@@ -71,29 +78,29 @@ pub fn get_coords(mut coords: String, object: &str, rows: usize, columns: usize)
 // todo otra ventaja lifetimes? usarlo en algun lado
 impl Sokoban {
     pub fn new(input: &String) -> Result<Self, SokobanError> {
-        let (rows, columns) =  get_dimentions(input);
+        let (rows, columns) = get_dimentions(input);
         let map = create_map(input.clone(), rows, columns); // todo mencionar desventajas
 
-        let boxes_coords = match get_coords(input.clone(), BOX_STR, rows, columns){
+        let boxes_coords = match get_coords(input.clone(), BOX_STR, rows, columns) {
             Ok(b) => b,
-            Err(err) => return Err(err)
+            Err(err) => return Err(err),
         };
-        let target_coords = match get_coords(input.clone(), TARGET_STR, rows, columns){
+        let target_coords = match get_coords(input.clone(), TARGET_STR, rows, columns) {
             Ok(t) => t,
-            Err(err) => return Err(err)
+            Err(err) => return Err(err),
         };
 
         //sokoban = initialize_coords(sokoban, &boxes_coords, BOX_U8);
         //sokoban = initialize_coords(sokoban, &target_coords, TARGET_U8);
 
-         Ok(Sokoban {
+        Ok(Sokoban {
             map,
-            user_coords: Coord { x: 0, y: 0},
+            user_coords: Coord { x: 0, y: 0 },
             boxes_coords,
             target_coords,
             rows,
-            columns
-         })
+            columns,
+        })
     }
 }
 
@@ -107,9 +114,9 @@ pub fn play(input: &String) -> Result<(), SokobanError> {
     validate_file(&map)?;
     print_map(&map.clone()); // todo refactor
 
-    let mut sokoban = match Sokoban::new(&map){
+    let mut sokoban = match Sokoban::new(&map) {
         Ok(s) => s,
-        Err(err) => return Err(err)
+        Err(err) => return Err(err),
     };
 
     loop {
@@ -126,8 +133,9 @@ pub fn play(input: &String) -> Result<(), SokobanError> {
 
         //print_map(&map, &boxes_coords, &boxes_targets, &player_coords);
 
-//        if victory(&sokoban) {
-        if true {//victory(&boxes_coords, &boxes_targets) {
+        //        if victory(&sokoban) {
+        if true {
+            //victory(&boxes_coords, &boxes_targets) {
             show_victory();
             break;
         }
@@ -152,5 +160,3 @@ pub fn play(input: &String) -> Result<(), SokobanError> {
     }
     return true;
 }*/
-
-
