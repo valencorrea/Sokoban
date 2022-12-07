@@ -30,3 +30,4 @@ Otros comandos de interes:
 
 ### Otros links
 - [Enunciado](https://www.overleaf.com/read/zvzwxrbpccdr)
+- [Diagramas](https://app.diagrams.net/?src=about#G1_NYiNCN_tEunzVMFoxVxDoBZJ0oGXEtN)

@@ -1,0 +1,10 @@
+ventajas de rust
+    manejo de referencias - ownership
+    thread safety
+    no tiene garbage collector
+    genera documentacion
+    cargo clippy -> mucho detalle en los errores, ejemplos para cambiarlos, y sugerencias de legibilidad
+    inmutabilidad por default
+    inferencia de tipos, no se necesita explicitarlos
+    cargo
+    clone
