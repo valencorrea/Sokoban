@@ -37,17 +37,11 @@ pub fn get_next_valid_coord(user_coords: &Coord, delta_x: i8, delta_y: i8, rows:
     if (new_coord_y >= *rows as i8) || (new_coord_y < 0){
         new_coord_y = user_coords.y as i8;
     };
-    Coord{ x: new_coord_x as u8, y: new_coord_y as u8}
-}
-
-pub fn get_previous_valid_coord(user_coords: &Coord, delta_x: i8, delta_y: i8) -> Coord {
-    let past_coord_x = (user_coords.x as i8 + delta_x * 2) as u8;
-    let past_coord_y = (user_coords.y as i8 + delta_y * 2) as u8;
-    Coord{ x: past_coord_x, y: past_coord_y }
+    Coord{ x: new_coord_x as usize, y: new_coord_y as usize }
 }
 
 pub fn is_object(next_coord: &Coord, object_to_compare: u8, map: &Vec<Vec<u8>>) -> bool {
-    return if map[next_coord.x][next_coord.y] == object_to_compare {
+    return if map[next_coord.x as usize][next_coord.y as usize] == object_to_compare {
         true
     } else {
         false
@@ -58,7 +52,7 @@ pub fn process_move(sokoban: &mut Sokoban, movement: Move){
     // todo mencionar que se puede explicitar el tipo
 
     let (delta_x, delta_y) = get_deltas(movement);
-    let next_coord: Coord = get_next_valid_coord(&sokoban.user_coords, delta_x, delta_y, &sokoban.rows, &sokoban.columns);
+    let mut next_coord: Coord = get_next_valid_coord(&sokoban.user_coords, delta_x, delta_y, &sokoban.rows, &sokoban.columns);
 
     if is_object(&next_coord, WALL_U8, &sokoban.map) {
         return;
@@ -68,20 +62,20 @@ pub fn process_move(sokoban: &mut Sokoban, movement: Move){
         let next_next_coord = get_next_valid_coord(&next_coord, delta_x, delta_y, &sokoban.rows, &sokoban.columns);
 
         if is_object(&next_next_coord, WALL_U8, &sokoban.map) ||
-            is_object(&actual_coord, BOX_U8, &sokoban.map) {
+            is_object(&next_next_coord, BOX_U8, &sokoban.map) {
             return;
         } else {
-            move_box(&mut sokoban.map, &next_coord, &next_next_coord, &sokoban.target_coords);
+            move_box(&mut sokoban.map, &mut next_coord, &next_next_coord, &sokoban.target_coords);
         }
     }
     move_player(&mut sokoban.map, &mut sokoban.user_coords, &next_coord, &sokoban.target_coords);
 }
 
 fn move_object(map: &mut Vec<Vec<u8>>, coords_from: &mut Coord, coords_to: &Coord, target_coords: &Vec<Coord>, object: u8){
-    map[coord_to.y][coord_to.x] = object;
+    map[coords_to.y][coords_to.x] = object;
 
-    if target_coords.contains(coord_from){
-        map[coord_from.y][coord_from.x] = TARGET_U8;
+    if target_coords.contains(coords_from){
+        map[coords_from.y][coords_from.x] = TARGET_U8;
     }
 }
 
@@ -90,6 +84,6 @@ fn move_player(map: &mut Vec<Vec<u8>>, coords_from: &mut Coord, coords_to: &Coor
 }
 
 // todo volar el vector de boxes coords
-fn move_box(map: &mut Vec<Vec<u8>>, coord_from: &Coord, coord_to: &Coord, target_coords: &Vec<Coord>){
-    move_object(map, coords_from, coords_to,target_coords, BOX_U8);
+fn move_box(map: &mut Vec<Vec<u8>>, coords_from: &mut Coord, coords_to: &Coord, target_coords: &Vec<Coord>){
+    move_object(map, coords_from, coords_to, target_coords, BOX_U8);
 }
