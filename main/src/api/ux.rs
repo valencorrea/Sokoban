@@ -1,5 +1,5 @@
 use crate::api::sokoban_service::Sokoban;
-use crate::api::utils::{BOX_STR, BOX_U8, ENTER_STR, PLAYER_STR, PLAYER_U8, TARGET_STR, TARGET_U8, WALL_STR, WALL_U8};
+use crate::api::utils::{BOX_STR, BOX_U8, EMPTY_PLACE_STR, ENTER_STR, PLAYER_STR, PLAYER_U8, TARGET_STR, TARGET_U8, WALL_STR, WALL_U8};
 
 pub fn show_welcome() {
     println!("\nBienvenidos al Sokoban!\n");
@@ -37,8 +37,11 @@ pub fn get_object(map_object: u8) -> &'static str {
         PLAYER_STR
     } else if map_object == BOX_U8 {
         BOX_STR
-    } else {
+    } else if map_object == TARGET_U8 {
         TARGET_STR
+    }
+    else {
+        EMPTY_PLACE_STR
     }
 }
 

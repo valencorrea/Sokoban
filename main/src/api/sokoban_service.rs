@@ -4,7 +4,7 @@ use crate::api::command_service::get_user_input;
 use crate::api::file_service::{read_file, validate_file};
 use crate::api::map_service::{create_map, get_dimentions};
 use crate::api::movement_service::{process_input, process_move};
-use crate::api::utils::{BOX_STR, BOX_U8, delete_enters, QUIT, TARGET_STR, TARGET_U8};
+use crate::api::utils::{BOX_STR, BOX_U8, delete_enters, PLAYER_STR, QUIT, TARGET_STR, TARGET_U8};
 use crate::api::ux::{print_map, show_goodbye, show_victory, show_welcome};
 
 #[derive(Debug)]
@@ -44,7 +44,6 @@ pub fn get_coords(mut coords: String, object: &str, rows: usize, columns: usize)
     let mut column = 0;
     let mut coord_vec = vec![Coord{x:0, y:0}]; // todo al final eliminar el primero
 
-    println!("{:?}", coords);
     while row < rows && !coords.is_empty(){
         if coords.remove(0).to_string() == object.to_string() {
             let new_coord = Coord{x: row, y: column};
@@ -72,7 +71,6 @@ pub fn initialize_coords(sokoban: &mut Vec<Vec<u8>>, coords: &Vec<Coord>, object
 impl Sokoban {
     pub fn new(input: &mut String) -> Result<Self, SokobanError> {
         let (rows, columns) =  get_dimentions(input);
-        // ya no tiene enters
         let input = delete_enters(input);
         let mut map = create_map(input.clone(), rows, columns); // todo mencionar desventajas
 
@@ -80,12 +78,15 @@ impl Sokoban {
             Ok(t) => t,
             Err(err) => return Err(err)
         };
-        println!("{:?}", target_coords);
-        //initialize_coords(&mut map, &target_coords, TARGET_U8);
 
-         Ok(Sokoban {
+        let mut vec_user_coords = match get_coords(input.clone(), PLAYER_STR, rows, columns){
+            Ok(t) => t,
+            Err(err) => return Err(err)
+        };
+
+        Ok(Sokoban {
             map,
-            user_coords: Coord { x: 0, y: 0},
+            user_coords: vec_user_coords.remove(0),// devuelve la primera posicion
             target_coords,
             rows,
             columns
@@ -102,14 +103,13 @@ pub fn play(input: &String) -> Result<(), SokobanError> {
     };
     validate_file(&map)?;
     //print_map(&map.clone()); // todo refactor
-
     let mut sokoban = match Sokoban::new(&mut map){
         Ok(s) => s,
         Err(error) => return Err(error)
     };
 
-    /*
     loop {
+        print_map(&mut sokoban);
         let input = match get_user_input() {
             Ok(i) => i,
             Err(err) => return Err(SokobanError::FileError("err".to_string())),
@@ -124,31 +124,33 @@ pub fn play(input: &String) -> Result<(), SokobanError> {
         print_map(&mut sokoban);
         //print_map(&map, &boxes_coords, &boxes_targets, &player_coords);
 
-//        if victory(&sokoban) {
-        if true {//victory(&boxes_coords, &boxes_targets) {
+        if victory(&sokoban) {
             show_victory();
             break;
         }
     }
-*/
+
     show_goodbye();
     Ok(())
 }
 
-/*fn victory(sokoban: &Sokoban) -> bool {
-    for box_coord in sokoban.boxes_coords {
-        let mut placed: bool = false;
-        for target_coord in sokoban.target_coords {
-            if box_coord.x == target_coord.x && box_coord.y == target_coord.y {
-                placed = true;
-                break;
-            }
-        }
-        if !placed {
-            return false;
+fn victory(sokoban: &Sokoban) -> bool {
+    let mut cant_targets = 0;
+    let mut target_index = 0;
+
+    while target_index < sokoban.target_coords.len() {
+        let target = match sokoban.target_coords.get(target_index){
+            Some(t) => t,
+            None => &Coord{ x: 0, y: 0 }, // no deberia entrar nunca aca
+        };
+
+        if sokoban.map[target.y][target.x] == BOX_U8 {
+            cant_targets += 1;
         }
     }
-    return true;
-}*/
+    return if cant_targets == sokoban.target_coords.len() {
+        true
+    } else { false }
+}
 
 
