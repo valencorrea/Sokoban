@@ -32,8 +32,8 @@ pub enum Move {
 pub struct Sokoban {
     pub map: Vec<Vec<u8>>,
     pub user_coords: Coord,
-    pub boxes_coords: Vec<Coord>,
-    pub target_coords: Vec<Coord>,
+    pub boxes_coords: Vec<Coord>,// sacar
+    pub target_coords: Vec<Coord>, // usar para ver si gano
     pub rows: usize,
     pub columns: usize,
 }
@@ -106,7 +106,7 @@ pub fn play(input: &String) -> Result<(), SokobanError> {
         Err(error) => return Err(SokobanError::FileError("err".to_string())),
     };
     validate_file(&map)?;
-    print_map(&map.clone()); // todo refactor
+    //print_map(&map.clone()); // todo refactor
 
     let mut sokoban = match Sokoban::new(&map){
         Ok(s) => s,
@@ -125,6 +125,7 @@ pub fn play(input: &String) -> Result<(), SokobanError> {
         let movement: Move = process_input(&input);
         process_move(&mut sokoban, movement);
 
+        print_map(&mut sokoban);
         //print_map(&map, &boxes_coords, &boxes_targets, &player_coords);
 
 //        if victory(&sokoban) {

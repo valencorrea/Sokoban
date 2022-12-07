@@ -1,5 +1,5 @@
 use crate::api::sokoban_service::{Coord, Move, Sokoban};
-use crate::api::utils::{DOWN, LEFT, UP};
+use crate::api::utils::{BOX_U8, DOWN, LEFT, PLAYER_U8, TARGET_U8, UP, WALL_U8};
 
 pub fn process_input(input: &String) -> Move {
     return if input == UP {
@@ -46,54 +46,50 @@ pub fn get_previous_valid_coord(user_coords: &Coord, delta_x: i8, delta_y: i8) -
     Coord{ x: past_coord_x, y: past_coord_y }
 }
 
+pub fn is_object(next_coord: &Coord, object_to_compare: u8, map: &Vec<Vec<u8>>) -> bool {
+    return if map[next_coord.x][next_coord.y] == object_to_compare {
+        true
+    } else {
+        false
+    }
+}
+
 pub fn process_move(sokoban: &mut Sokoban, movement: Move){
     // todo mencionar que se puede explicitar el tipo
 
     let (delta_x, delta_y) = get_deltas(movement);
-    let coord_in_direction: Coord = get_next_valid_coord(&sokoban.user_coords, delta_x, delta_y, &sokoban.rows, &sokoban.columns);
-    let coord_in_past_direction: Coord = get_previous_valid_coord(&sokoban.user_coords, delta_x, delta_y);
+    let next_coord: Coord = get_next_valid_coord(&sokoban.user_coords, delta_x, delta_y, &sokoban.rows, &sokoban.columns);
 
-    if is_wall(&coord_in_direction, &sokoban.map) {
+    if is_object(&next_coord, WALL_U8, &sokoban.map) {
         return;
-    } else if is_box(&coord_in_direction, &sokoban.boxes_coords) {
-        if is_wall(&coord_in_past_direction, &sokoban.map) {
-            return;
-        } else if is_box(&coord_in_past_direction, &sokoban.boxes_coords) {
+    }
+
+    if is_object(&next_coord, BOX_U8, &sokoban.map) {
+        let next_next_coord = get_next_valid_coord(&next_coord, delta_x, delta_y, &sokoban.rows, &sokoban.columns);
+
+        if is_object(&next_next_coord, WALL_U8, &sokoban.map) ||
+            is_object(&actual_coord, BOX_U8, &sokoban.map) {
             return;
         } else {
-            move_player(&mut sokoban.user_coords, &coord_in_direction);
-            move_box(&mut sokoban.boxes_coords, &coord_in_direction, &coord_in_past_direction);
+            move_box(&mut sokoban.map, &next_coord, &next_next_coord, &sokoban.target_coords);
         }
-    } else {
-        move_player(&mut sokoban.user_coords, &coord_in_direction);
-        return;
+    }
+    move_player(&mut sokoban.map, &mut sokoban.user_coords, &next_coord, &sokoban.target_coords);
+}
+
+fn move_object(map: &mut Vec<Vec<u8>>, coords_from: &mut Coord, coords_to: &Coord, target_coords: &Vec<Coord>, object: u8){
+    map[coord_to.y][coord_to.x] = object;
+
+    if target_coords.contains(coord_from){
+        map[coord_from.y][coord_from.x] = TARGET_U8;
     }
 }
 
-fn is_wall(coord: &Coord, map: &Vec<Vec<u8>>) -> bool {
-    return map[coord.y as usize][coord.x as usize] == 1;
+fn move_player(map: &mut Vec<Vec<u8>>, coords_from: &mut Coord, coords_to: &Coord, target_coords: &Vec<Coord>){
+    move_object(map, coords_from, coords_to,target_coords, PLAYER_U8);
 }
 
-fn is_box(coord: &Coord, boxes_coords: &Vec<Coord>) -> bool {
-    for box_coords in boxes_coords.iter() {
-        if coord.x == box_coords.x && coord.y == box_coords.y {
-            return true;
-        }
-    }
-    return false;
-}
-
-fn move_player(player_coords: &mut Coord, new_cord: &Coord) {
-    player_coords.x = new_cord.x;
-    player_coords.y = new_cord.y;
-}
-
-fn move_box(boxes_coords: &mut Vec<Coord>, box_coords: &Coord, box_new_coords: &Coord) {
-    for boxx in boxes_coords.iter_mut() {
-        if boxx.x == box_coords.x && boxx.y == box_coords.y {
-            boxx.x = box_new_coords.x;
-            boxx.y = box_new_coords.y;
-            return;
-        }
-    }
+// todo volar el vector de boxes coords
+fn move_box(map: &mut Vec<Vec<u8>>, coord_from: &Coord, coord_to: &Coord, target_coords: &Vec<Coord>){
+    move_object(map, coords_from, coords_to,target_coords, BOX_U8);
 }

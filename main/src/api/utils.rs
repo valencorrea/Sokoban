@@ -1,11 +1,13 @@
-pub const WALL_U8: u8 = 35; // #
-pub const BOX_U8: u8 = 61; // =
-pub const TARGET_U8: u8 = 43; // +
+pub const WALL_U8: u8 = 87;
+pub const BOX_U8: u8 = 66;
+pub const TARGET_U8: u8 = 84;
+pub const PLAYER_U8: u8 = 80;
 pub const ENTER_U8: u8 = 10;
 
-pub const BOX_STR: &str = "=";
-pub const TARGET_STR: &str = "+";
-pub const WALL_STR: &str = "#";
+pub const BOX_STR: &str = "B";
+pub const TARGET_STR: &str = "T";
+pub const WALL_STR: &str = "W";
+pub const PLAYER_STR: &str = "P";
 pub const ENTER_STR: &str = "\n";
 
 pub const UP: &str = "W";
