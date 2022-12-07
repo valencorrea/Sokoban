@@ -4,7 +4,7 @@ use crate::api::command_service::get_user_input;
 use crate::api::file_service::{read_file, validate_file};
 use crate::api::map_service::{create_map, get_dimentions};
 use crate::api::movement_service::{process_input, process_move};
-use crate::api::utils::{BOX_STR, BOX_U8, QUIT, TARGET_STR, TARGET_U8};
+use crate::api::utils::{BOX_STR, BOX_U8, delete_enters, QUIT, TARGET_STR, TARGET_U8};
 use crate::api::ux::{print_map, show_goodbye, show_victory, show_welcome};
 
 #[derive(Debug)]
@@ -44,6 +44,7 @@ pub fn get_coords(mut coords: String, object: &str, rows: usize, columns: usize)
     let mut column = 0;
     let mut coord_vec = vec![Coord{x:0, y:0}]; // todo al final eliminar el primero
 
+    println!("{:?}", coords);
     while row < rows && !coords.is_empty(){
         if coords.remove(0).to_string() == object.to_string() {
             let new_coord = Coord{x: row, y: column};
@@ -69,21 +70,18 @@ pub fn initialize_coords(sokoban: &mut Vec<Vec<u8>>, coords: &Vec<Coord>, object
 // todo mencionar como ventaja el que pueden ser estaticos o mutables
 // todo otra ventaja lifetimes? usarlo en algun lado
 impl Sokoban {
-    pub fn new(input: &String) -> Result<Self, SokobanError> {
+    pub fn new(input: &mut String) -> Result<Self, SokobanError> {
         let (rows, columns) =  get_dimentions(input);
+        // ya no tiene enters
+        let input = delete_enters(input);
         let mut map = create_map(input.clone(), rows, columns); // todo mencionar desventajas
 
-        let boxes_coords = match get_coords(input.clone(), BOX_STR, rows, columns){
-            Ok(b) => b,
-            Err(err) => return Err(err)
-        };
         let target_coords = match get_coords(input.clone(), TARGET_STR, rows, columns){
             Ok(t) => t,
             Err(err) => return Err(err)
         };
-
-        initialize_coords(&mut map, &boxes_coords, BOX_U8);
-        initialize_coords(&mut map, &target_coords, TARGET_U8);
+        println!("{:?}", target_coords);
+        //initialize_coords(&mut map, &target_coords, TARGET_U8);
 
          Ok(Sokoban {
             map,
@@ -100,16 +98,17 @@ pub fn play(input: &String) -> Result<(), SokobanError> {
     show_welcome();
     let mut map = match read_file(input) {
         Ok(result) => result,
-        Err(error) => return Err(SokobanError::FileError("err".to_string())),
+        Err(error) => return Err(error),
     };
     validate_file(&map)?;
     //print_map(&map.clone()); // todo refactor
 
-    let mut sokoban = match Sokoban::new(&map){
+    let mut sokoban = match Sokoban::new(&mut map){
         Ok(s) => s,
-        Err(err) => return Err(err)
+        Err(error) => return Err(error)
     };
 
+    /*
     loop {
         let input = match get_user_input() {
             Ok(i) => i,
@@ -131,7 +130,7 @@ pub fn play(input: &String) -> Result<(), SokobanError> {
             break;
         }
     }
-
+*/
     show_goodbye();
     Ok(())
 }

@@ -16,7 +16,7 @@ pub const LEFT: &str = "A";
 pub const RIGHT: &str = "D";
 pub const QUIT: &str = "Q";
 
-pub fn delete_enters(input: String) -> String {
+pub fn delete_enters(input: &mut String) -> String {
     let mut output: String = String::new();
     for i in input.chars() {
         if i.to_string() != ENTER_STR {

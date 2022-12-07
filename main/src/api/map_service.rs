@@ -26,8 +26,6 @@ pub fn create_map(mut input: String, rows: usize, columns: usize) -> Vec<Vec<u8>
     let mut row = 0;
     let mut column = 0;
 
-    input = delete_enters(input);
-
     while row < rows && !input.is_empty() {
         map[row][column] = input.remove(0) as u8; // todo mencionar casteos
         if column == columns - 1 {
