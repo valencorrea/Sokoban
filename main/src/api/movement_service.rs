@@ -1,5 +1,5 @@
 use crate::api::sokoban_service::{Coord, Move, Sokoban};
-use crate::api::utils::{BOX_U8, DOWN, LEFT, PLAYER_U8, TARGET_U8, UP, WALL_U8};
+use crate::api::utils::{BOX_U8, DOWN, EMPTY_PLACE_U8, LEFT, PLAYER_U8, TARGET_U8, UP, WALL_U8};
 
 pub fn process_input(input: &String) -> Move {
     return if input == UP {
@@ -76,6 +76,9 @@ fn move_object(map: &mut Vec<Vec<u8>>, coords_from: &mut Coord, coords_to: &Coor
 
     if target_coords.contains(coords_from){
         map[coords_from.y][coords_from.x] = TARGET_U8;
+    }
+    else {
+        map[coords_from.y][coords_from.x] = EMPTY_PLACE_U8;
     }
 }
 
