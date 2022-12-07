@@ -8,6 +8,7 @@ pub fn is_valid_input(input: &String) -> bool {
     return input == UP || input == DOWN || input == LEFT || input == RIGHT || input == QUIT;
 }
 
+// todo si es invalido volver a pedir o mostrar ayuda
 pub fn get_user_input() -> Result<String, FileError> {
     let mut command: String = String::new();
     loop {
