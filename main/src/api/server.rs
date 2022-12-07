@@ -15,7 +15,7 @@ impl Server {
             Err(error) => return Err(SokobanError::FileError("err".to_string())),
         };
         Ok(Server {
-            sokoban: Sokoban::new(&map).unwrap(),
+            sokoban: Sokoban::new(&mut map).unwrap(),
         })
     }
 

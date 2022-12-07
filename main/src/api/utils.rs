@@ -5,6 +5,7 @@ pub const TARGET_U8: u8 = 43; // +
 pub const BOX_ON_TARGET_U8: u8 = 42; // *
 pub const PLAYER_U8: u8 = 80; // P
 pub const ENTER_U8: u8 = 10;
+pub const EMPTY_PLACE_U8: u8 = 46;
 
 pub const AIR_STR: &str = " ";
 pub const BOX_STR: &str = "=";
@@ -21,7 +22,7 @@ pub const LEFT: &str = "A";
 pub const RIGHT: &str = "D";
 pub const QUIT: &str = "Q";
 
-pub fn delete_enters(input: String) -> String {
+pub fn delete_enters(input: &mut String) -> String {
     let mut output: String = String::new();
     for i in input.chars() {
         if i.to_string() != ENTER_STR && i.to_string() != ENTER_STR2 {
