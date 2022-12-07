@@ -18,7 +18,8 @@ fn main() -> Result<(), SokobanError> { // todo generalizar error
 }*/
 
 fn main() -> std::io::Result<()> {
-    let server: Server = Server::create().unwrap();
+    //let server: Server = Server::create().unwrap();
+    let server: Server = Server {};
     server.run();
     Ok(())
 }
