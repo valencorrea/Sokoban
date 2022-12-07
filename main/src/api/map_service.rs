@@ -23,13 +23,16 @@ pub fn get_dimentions(map: &String) -> (usize, usize) {
 
 pub fn create_map(mut input: String, rows: usize, columns: usize) -> Vec<Vec<u8>> {
     let mut map = vec![vec![0; columns]; rows];
+    let mut map_str = vec![vec![' '; columns]; rows];
     let mut row = 0;
     let mut column = 0;
 
     input = delete_enters(input);
 
     while row < rows && !input.is_empty() {
-        map[row][column] = input.remove(0) as u8; // todo mencionar casteos
+        let cell = input.remove(0); // todo mencionar casteos
+        map[row][column] = cell as u8;
+        map_str[row][column] = cell;
         if column == columns - 1 {
             column = 0;
             row += 1;

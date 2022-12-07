@@ -1,7 +1,7 @@
 use crate::api::sokoban_service::{Coord, Move, Sokoban};
 use crate::api::utils::{DOWN, LEFT, UP};
 
-pub fn process_input(input: &String) -> Move {
+pub fn process_input(input: &str) -> Move {
     return if input == UP {
         Move::Up
     } else if input == LEFT {
@@ -10,10 +10,10 @@ pub fn process_input(input: &String) -> Move {
         Move::Down
     } else {
         Move::Right
-    }
+    };
 }
 
-pub fn get_deltas(movement: Move) -> (i8, i8){
+pub fn get_deltas(movement: Move) -> (i8, i8) {
     let mut delta_x: i8 = 0;
     let mut delta_y: i8 = 0;
 
@@ -26,32 +26,51 @@ pub fn get_deltas(movement: Move) -> (i8, i8){
     (delta_x, delta_y)
 }
 
-pub fn get_next_valid_coord(user_coords: &Coord, delta_x: i8, delta_y: i8, rows: &usize, columns: &usize) -> Coord {
-    let mut new_coord_x =  user_coords.x as i8 + delta_x;
-    let mut new_coord_y =  user_coords.y as i8 + delta_y;
+pub fn get_next_valid_coord(
+    user_coords: &Coord,
+    delta_x: i8,
+    delta_y: i8,
+    rows: &usize,
+    columns: &usize,
+) -> Coord {
+    let mut new_coord_x = user_coords.x as i8 + delta_x;
+    let mut new_coord_y = user_coords.y as i8 + delta_y;
 
     // si se va del mapa no lo dejamos hacer el movimiento
-    if (new_coord_x >= *columns as i8) || (new_coord_x < 0){
+    if (new_coord_x >= *columns as i8) || (new_coord_x < 0) {
         new_coord_x = user_coords.x as i8;
     };
-    if (new_coord_y >= *rows as i8) || (new_coord_y < 0){
+    if (new_coord_y >= *rows as i8) || (new_coord_y < 0) {
         new_coord_y = user_coords.y as i8;
     };
-    Coord{ x: new_coord_x as u8, y: new_coord_y as u8}
+    Coord {
+        x: new_coord_x as u8,
+        y: new_coord_y as u8,
+    }
 }
 
 pub fn get_previous_valid_coord(user_coords: &Coord, delta_x: i8, delta_y: i8) -> Coord {
     let past_coord_x = (user_coords.x as i8 + delta_x * 2) as u8;
     let past_coord_y = (user_coords.y as i8 + delta_y * 2) as u8;
-    Coord{ x: past_coord_x, y: past_coord_y }
+    Coord {
+        x: past_coord_x,
+        y: past_coord_y,
+    }
 }
 
-pub fn process_move(sokoban: &mut Sokoban, movement: Move){
+pub fn process_move(sokoban: &mut Sokoban, movement: Move) {
     // todo mencionar que se puede explicitar el tipo
 
     let (delta_x, delta_y) = get_deltas(movement);
-    let coord_in_direction: Coord = get_next_valid_coord(&sokoban.user_coords, delta_x, delta_y, &sokoban.rows, &sokoban.columns);
-    let coord_in_past_direction: Coord = get_previous_valid_coord(&sokoban.user_coords, delta_x, delta_y);
+    let coord_in_direction: Coord = get_next_valid_coord(
+        &sokoban.user_coords,
+        delta_x,
+        delta_y,
+        &sokoban.rows,
+        &sokoban.columns,
+    );
+    let coord_in_past_direction: Coord =
+        get_previous_valid_coord(&sokoban.user_coords, delta_x, delta_y);
 
     if is_wall(&coord_in_direction, &sokoban.map) {
         return;
@@ -62,7 +81,11 @@ pub fn process_move(sokoban: &mut Sokoban, movement: Move){
             return;
         } else {
             move_player(&mut sokoban.user_coords, &coord_in_direction);
-            move_box(&mut sokoban.boxes_coords, &coord_in_direction, &coord_in_past_direction);
+            move_box(
+                &mut sokoban.boxes_coords,
+                &coord_in_direction,
+                &coord_in_past_direction,
+            );
         }
     } else {
         move_player(&mut sokoban.user_coords, &coord_in_direction);

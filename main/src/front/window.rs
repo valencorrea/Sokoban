@@ -1,4 +1,4 @@
-use crate::SokobanError;
+/*use crate::SokobanError;
 
 extern crate gio;
 extern crate glib;
@@ -23,4 +23,4 @@ fn show_ui() {
 pub fn run_app() -> Result<(), SokobanError> {
     show_ui();
     Ok(())
-}
+}*/
