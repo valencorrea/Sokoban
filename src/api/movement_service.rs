@@ -1,6 +1,6 @@
 use crate::api::sokoban_service::{Sokoban};
 use crate::api::constants::{BOX_ON_TARGET_U8, BOX_U8, DOWN, EMPTY_PLACE_U8, LEFT, PLAYER_U8, TARGET_U8, UP, WALL_U8};
-use crate::api::coord_service::{Coord, update_coords};
+use crate::api::coord_service::{Coord, equals_to, get_deltas, get_next_valid_coord, update_coords};
 use crate::api::map_service::refresh_map;
 use crate::api::ux::print_map;
 
@@ -22,41 +22,6 @@ pub fn process_input(input: &str) -> Move {
     } else {
         Move::Right
     };
-}
-
-pub fn get_deltas(movement: Move) -> (i8, i8) {
-    let mut delta_x: i8 = 0;
-    let mut delta_y: i8 = 0;
-
-    match movement {
-        Move::Up => delta_y = -1,
-        Move::Left => delta_x = -1,
-        Move::Down => delta_y = 1,
-        Move::Right => delta_x = 1,
-    };
-    (delta_x, delta_y)
-}
-
-pub fn get_next_valid_coord(
-    user_coords: &Coord,
-    delta_x: i8,
-    delta_y: i8,
-    rows: &usize,
-    columns: &usize,
-) -> Coord {
-    let mut new_coord_x = user_coords.x as i8 + delta_x;
-    let mut new_coord_y = user_coords.y as i8 + delta_y;
-
-    if (new_coord_x >= *columns as i8) || (new_coord_x < 0) {
-        new_coord_x = user_coords.x as i8;
-    };
-    if (new_coord_y >= *rows as i8) || (new_coord_y < 0) {
-        new_coord_y = user_coords.y as i8;
-    };
-    Coord {
-        x: new_coord_x as usize,
-        y: new_coord_y as usize,
-    }
 }
 
 pub fn is_object(next_coord: &Coord, object_to_compare: u8, map: &Vec<Vec<u8>>) -> bool {
@@ -98,16 +63,13 @@ fn move_player(map: &mut Vec<Vec<u8>>, coords_from: &mut Coord, coords_to: &Coor
 }
 
 fn move_box(
-    map: &mut Vec<Vec<u8>>,
-    coords_from: &mut Coord,
-    coords_to: &mut Coord,
-    target_coords: &Vec<Coord>,
-    boxes_on_target_coords: &mut Vec<Coord>,
-    boxes_coords: &mut Vec<Coord>,
+    map: &mut Vec<Vec<u8>>, coords_from: &mut Coord, coords_to: &mut Coord, target_coords: &Vec<Coord>,
+    boxes_on_target_coords: &mut Vec<Coord>, boxes_coords: &mut Vec<Coord>,
 ) {
-    let move_to_target = is_object(&coords_to, TARGET_U8, map); // meto box en target
-    let move_from_target = is_object(&coords_from, BOX_ON_TARGET_U8, map); // empujo box de target
-    match boxes_coords.iter().position(|b| (b.y == coords_from.y) && (b.x == coords_from.x)){
+    let move_to_target = is_object(&coords_to, TARGET_U8, map);
+    let move_from_target = is_object(&coords_from, BOX_ON_TARGET_U8, map);
+
+    match boxes_coords.iter().position(|b| equals_to(b, coords_from)){
         None => {}
         Some(index_to_remove) => {
             boxes_coords.remove(index_to_remove);
@@ -115,7 +77,10 @@ fn move_box(
         }
     }
     refresh_map(map, coords_from, coords_to, target_coords, BOX_U8, boxes_on_target_coords, boxes_coords);
+    update_vectors(move_to_target, move_from_target, coords_to, coords_from, boxes_on_target_coords, map);
+}
 
+fn update_vectors(move_to_target: bool, move_from_target: bool, coords_to: &mut Coord, coords_from: &mut Coord, boxes_on_target_coords: &mut Vec<Coord>, map: &mut Vec<Vec<u8>>){
     if move_to_target {
         push_target(coords_to, boxes_on_target_coords, map);
     }
@@ -126,25 +91,18 @@ fn move_box(
 }
 
 fn pop_target(coords_from: &mut Coord, coords_to: &mut Coord, boxes_on_target_coords: &mut Vec<Coord>, map: &mut Vec<Vec<u8>>){
-    match boxes_on_target_coords.iter().position(|b| (b.y == coords_from.y) && (b.x == coords_from.x)){
+    match boxes_on_target_coords.iter().position(|b| equals_to(b, coords_from)){
         None => {}
         Some(index_to_remove) => {
             boxes_on_target_coords.remove(index_to_remove);
-            map[coords_to.y ][coords_to.x] = BOX_U8;
+            map[coords_to.y][coords_to.x] = BOX_U8;
         }
     }
-
 }
 
 fn push_target(next_next_coord: &Coord, boxes_on_target_coords: &mut Vec<Coord>, map: &mut Vec<Vec<u8>>){
     let coord = Coord{x: next_next_coord.x, y:next_next_coord.y};
     boxes_on_target_coords.push(coord);
-    map[next_next_coord.y ][next_next_coord.x] = BOX_ON_TARGET_U8;
+    map[next_next_coord.y][next_next_coord.x] = BOX_ON_TARGET_U8;
 }
 
-pub fn won_game(sokoban: &mut Sokoban) -> bool {
-    return if sokoban.boxes_on_target_coords.len() == sokoban.target_coords.len() {
-        print_map(sokoban);
-        true
-    } else { false }
-}

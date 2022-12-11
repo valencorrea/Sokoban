@@ -1,9 +1,9 @@
 use crate::api::command_service::get_user_input;
 use crate::api::file_service::{read_file, validate_file};
 use crate::api::map_service::{create_map, get_dimentions};
-use crate::api::movement_service::{Move, process_input, process_move, won_game};
+use crate::api::movement_service::{Move, process_input, process_move};
 use crate::api::constants::{BOX_STR, WALL_U8, TARGET_STR, PLAYER_STR, QUIT, BOX_U8, BOX_ON_TARGET_STR, ERR_GETTING_INPUT};
-use crate::api::_utils::delete_enters;
+use crate::api::utils::delete_enters;
 use crate::api::ux::{print_map, show_goodbye, show_victory, show_welcome};
 use std::fmt::Debug;
 use crate::api::coord_service::Coord;
@@ -181,6 +181,13 @@ impl Sokoban {
 fn end_game(input: &String) -> bool {
     return if input == QUIT {
         show_goodbye();
+        true
+    } else { false }
+}
+
+pub fn won_game(sokoban: &mut Sokoban) -> bool {
+    return if sokoban.boxes_on_target_coords.len() == sokoban.target_coords.len() {
+        print_map(sokoban);
         true
     } else { false }
 }

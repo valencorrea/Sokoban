@@ -2,7 +2,7 @@ mod command_service;
 mod file_service;
 mod map_service;
 pub(crate) mod sokoban_service;
-mod _utils;
+mod utils;
 mod ux;
 
 pub mod server;
