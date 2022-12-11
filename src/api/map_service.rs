@@ -63,3 +63,18 @@ pub fn refresh_map(
         map[coords_from.y][coords_from.x] = EMPTY_PLACE_U8;
     }
 }
+
+#[cfg(test)]
+mod dimentions_tests {
+    use super::*;
+
+    #[test]
+    fn map_nxm_cant_rows_returns_n() {
+        assert_eq!(rows(&[42, 42, 42, ENTER_U8, 42, 42, 42, ENTER_U8]), 2);
+    }
+
+    #[test]
+    fn map_nxm_cant_columns_returns_m() {
+        assert_eq!(columns(8, &(2 as usize)), 3);
+    }
+}
