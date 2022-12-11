@@ -1,7 +1,9 @@
 use crate::api::file_service::{read_file, validate_file};
 use crate::api::constants::{BOX_STR, WALL_U8, TARGET_STR, PLAYER_STR, QUIT, BOX_U8, BOX_ON_TARGET_STR, ENTER_STR2};
 use crate::api::utils::delete_enters;
+use std::borrow::BorrowMut;
 use std::fmt::Debug;
+use std::ops::DerefMut;
 use std::sync::{MutexGuard, Arc};
 use crate::api::coord::Coord;
 
@@ -56,11 +58,11 @@ impl Sokoban {
 
     }
 
-    pub fn print(sokoban: Arc<MutexGuard<Sokoban>>) {
+    pub fn print(&self) {
         let mut str_map = String::new();
-        for row in 0..sokoban.rows {
-            for column in 0..sokoban.columns {
-                let object = get_object(sokoban.map[row][column]);
+        for row in 0..self.rows {
+            for column in 0..self.columns {
+                let object = get_object(self.map[row][column]);
                 str_map.push(object.parse().unwrap());
             }
             str_map.push_str(ENTER_STR2);
@@ -69,12 +71,12 @@ impl Sokoban {
         println!("{}", str_map);    
     }
   
-    pub fn is_wall(sokoban: Arc<MutexGuard<Sokoban>>, coords: &Coord) -> bool {
-        return sokoban.map[coords.y as usize][coords.x as usize] == 1;
+    pub fn is_wall(&self, coords: &Coord) -> bool {
+        return self.map[coords.y as usize][coords.x as usize] == 1;
     }
 
-    pub fn is_box(sokoban: Arc<MutexGuard<Sokoban>>, coord: &Coord) -> bool {
-        for box_coords in sokoban.boxes_coords.iter() {
+    pub fn is_box(&self, coord: &Coord) -> bool {
+        for box_coords in self.boxes_coords.iter() {
             if coord.x == box_coords.x && coord.y == box_coords.y {
                 return true;
             }
@@ -82,13 +84,13 @@ impl Sokoban {
         return false;
     }
     
-    pub fn move_player(mut sokoban: MutexGuard<Sokoban>, new_cord: &Coord) {
-        sokoban.user_coords.x = new_cord.x;
-        sokoban.user_coords.y = new_cord.y;
+    pub fn move_player(&mut self, new_cord: &Coord) {
+        self.user_coords.x = new_cord.x;
+        self.user_coords.y = new_cord.y;
     }
     
-    pub fn move_box(mut sokoban: MutexGuard<Sokoban>, box_coords: &Coord, box_new_coords: &Coord) {
-        sokoban.boxes_coords.iter_mut().for_each(|boxx| {
+    pub fn move_box(&mut self, box_coords: &Coord, box_new_coords: &Coord) {
+        self.boxes_coords.iter_mut().for_each(|boxx| {
             if boxx.x == box_coords.x && boxx.y == box_coords.y {
                 boxx.x = box_new_coords.x;
                 boxx.y = box_new_coords.y;
@@ -97,10 +99,10 @@ impl Sokoban {
         });
     }
 
-    pub fn victory(sokoban: Arc<MutexGuard<Sokoban>>) -> bool {
-        for box_coords in sokoban.boxes_coords.iter() {
+    pub fn victory(&self) -> bool {
+        for box_coords in self.boxes_coords.iter() {
             let mut placed: bool = false;
-            for box_target in sokoban.boxes_on_target_coords.iter() {
+            for box_target in self.boxes_on_target_coords.iter() {
                 if box_coords.x == box_target.x && box_coords.y == box_target.y {
                     placed = true;
                     break;

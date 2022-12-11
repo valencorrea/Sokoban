@@ -1,4 +1,4 @@
-use std::{net::{TcpListener, TcpStream}, thread, io::{BufReader, BufRead, Write}, sync::{Arc, Mutex}};
+use std::{net::{TcpListener, TcpStream}, thread, io::{BufReader, BufRead, Write}, sync::{Arc, Mutex, RwLock}};
 
 use crate::api::movement::Move;
 
@@ -6,13 +6,13 @@ use super::{sokoban::Sokoban, coord::Coord};
 
 #[derive(Debug)]
 pub struct Server {
-    sokoban: Arc<Mutex<Sokoban>>,
+    sokoban: Mutex<Sokoban>,
 }
 
 impl Server {
     pub fn create_from_map(sokoban: Sokoban) -> Server {
         Server {
-            sokoban: Arc::new(Mutex::new(sokoban)),
+            sokoban: Mutex::new(sokoban),
         }
     }
 
@@ -21,10 +21,8 @@ impl Server {
 
         {
             let ss = s.clone();
-
-            let sok = Arc::new(ss.sokoban.lock().unwrap()); 
-
-            Sokoban::print(sok.clone());
+            
+            ss.sokoban.lock().unwrap().print();
         }
 
         let listener = TcpListener::bind("0.0.0.0:7878")?;
@@ -82,20 +80,23 @@ impl Server {
                     let movement: Move = process_input(&input);
                     Server::process_move(server.clone(), movement);
 
-                    { 
-                        let sok = Arc::new(server.sokoban.lock().unwrap()); 
+                    {
+                        let s = server.clone();
 
-                        Sokoban::print(sok.clone());
+                        let sok = s.sokoban.lock().unwrap();
 
-                        if Sokoban::victory(sok.clone()){
+                        sok.print();
+
+                        if sok.victory(){
                             let response = String::from(
                                 "Felicitaciones! Has vencido el juego. Gracias por jugar.\n",
                             );
                             stream_clone.write_all(response.as_bytes());
                             break;
                         }
-                    } 
 
+                    }
+            
                     let response = String::from("OK\n");
                     stream_clone.write_all(response.as_bytes());
                 }
@@ -110,7 +111,7 @@ impl Server {
         server: Arc<Server>,
         movement: Move,
     ) {
-        let sok = Arc::new(server.sokoban.lock().unwrap());
+        let mut sok = server.sokoban.lock().unwrap();
 
         let mut delta_x: i8 = 0;
         let mut delta_y: i8 = 0;
@@ -131,80 +132,22 @@ impl Server {
             y: (sok.user_coords.y as i8 + delta_y * 2 as i8) as usize,
         };
 
-        if Sokoban::is_wall(sok.clone(), &coord_in_direction) { return; }
-        else if Sokoban::is_box(sok.clone(), &coord_in_direction) {
-            if Sokoban::is_wall(sok.clone(), &coord_in_past_direction) { return; } 
-            else if Sokoban::is_box(sok.clone(), &coord_in_past_direction) { return; } 
+        if sok.is_wall(&coord_in_direction) { return; }
+        else if sok.is_box(&coord_in_direction) {
+            if sok.is_wall(&coord_in_past_direction) { return; } 
+            else if sok.is_box(&coord_in_past_direction) { return; } 
             else {
-                Sokoban::move_player(server.sokoban.lock().unwrap(), &coord_in_direction);
-                Sokoban::move_box(server.sokoban.lock().unwrap(), &coord_in_direction, &coord_in_past_direction);
+                sok.move_player(&coord_in_direction);
+                sok.move_box(&coord_in_direction, &coord_in_past_direction);
             }
         } else {
-            Sokoban::move_player(server.sokoban.lock().unwrap(), &coord_in_direction);
+            sok.move_player(&coord_in_direction);
             return;
         }
         
     }
 
 }
-
-
-// fn print_map(
-//     map: &[[u8; 8]; 9],
-//     boxes_coords: &[Coord; 7],
-//     boxes_targets: &[Coord; 7],
-//     player_coords: &Coord,
-// ) {
-//     for j in 0..map.len() {
-//         let row: &[u8; 8] = &map[j];
-//         for i in 0..row.len() {
-//             let cell: u8 = row[i];
-//             let coord: Coord = Coord {
-//                 x: i as u8,
-//                 y: j as u8,
-//             };
-//             if cell == 1 {
-//                 print!("#");
-//             } else if is_player(&coord, &player_coords) {
-//                 print!("P");
-//             } else if is_box(&coord, &boxes_coords) {
-//                 if is_target(&coord, &boxes_targets) {
-//                     print!("*");
-//                 } else {
-//                     print!("=");
-//                 }
-//             } else if is_target(&coord, &boxes_targets) {
-//                 print!("+");
-//             } else {
-//                 print!(" ");
-//             }
-//             print!(" ");
-//         }
-//         println!("");
-//     }
-// }
-
-// fn get_user_input() -> String {
-//     let mut input: String = String::new();
-//     loop {
-//         input.clear();
-//         println!("Escribe tu movimiento (WASD) o Q para cerrar el juego:");
-//         io::stdin()
-//             .read_line(&mut input)
-//             .expect("Failed to read line");
-
-//         let trimmed_len: usize = input.trim_end().len();
-//         input.truncate(trimmed_len);
-
-//         if is_valid_input(&input) {
-//             return input;
-//         }
-//     }
-// }
-
-// fn is_valid_input(input: &String) -> bool {
-//     return input == "W" || input == "A" || input == "S" || input == "D" || input == "Q";
-// }
 
 fn process_input(input: &str) -> Move {
     if input == "W" {
@@ -217,37 +160,3 @@ fn process_input(input: &str) -> Move {
         return Move::Right;
     }
 }
-
-
-// fn is_player(coord: &Coord, player_coords: &Coord) -> bool {
-//     if coord.x == player_coords.x && coord.y == player_coords.y {
-//         return true;
-//     } else {
-//         return false;
-//     }
-// }
-
-// fn is_target(coord: &Coord, boxes_targets: &[Coord; 7]) -> bool {
-//     for box_target in boxes_targets.iter() {
-//         if coord.x == box_target.x && coord.y == box_target.y {
-//             return true;
-//         }
-//     }
-//     return false;
-// }
-
-
-
-// /*fn process_request(&mut self, client_request: String) -> String {
-//     let request: Vec<&str> = client_request.split(" ").collect();
-//     if request[0] == "QUIT" {
-//         return String::from("QUIT\n");
-//     } else if request[0] == "MOVE" {
-//         let dir = request[1];
-//         let movement: Move = process_input(dir);
-//         process_move(&mut self.sokoban, movement);
-//         return String::from("MOVING!\n");
-//     } else {
-//         return String::from("Bad request\n");
-//     }
-// }*/
