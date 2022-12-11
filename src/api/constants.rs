@@ -5,7 +5,6 @@ pub const TARGET_U8: u8 = 43; // +
 pub const BOX_ON_TARGET_U8: u8 = 42; // *
 pub const PLAYER_U8: u8 = 80; // P
 pub const ENTER_U8: u8 = 10;
-pub const EMPTY_PLACE_U8: u8 = 46;
 
 pub const AIR_STR: &str = " ";
 pub const BOX_STR: &str = "=";

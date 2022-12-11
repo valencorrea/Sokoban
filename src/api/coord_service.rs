@@ -1,6 +1,6 @@
-use crate::api::movement_service::Move;
+use crate::api::sokoban_service::Move;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Coord {
     pub x: usize,
     pub y: usize,
@@ -24,22 +24,14 @@ pub fn get_deltas(movement: Move) -> (i8, i8) {
     (delta_x, delta_y)
 }
 
-pub fn get_next_valid_coord(
+pub fn get_next_coord(
     user_coords: &Coord,
     delta_x: i8,
     delta_y: i8,
-    rows: &usize,
-    columns: &usize,
 ) -> Coord {
     let mut new_coord_x = user_coords.x as i8 + delta_x;
     let mut new_coord_y = user_coords.y as i8 + delta_y;
 
-    if (new_coord_x >= *columns as i8) || (new_coord_x < 0) {
-        new_coord_x = user_coords.x as i8;
-    };
-    if (new_coord_y >= *rows as i8) || (new_coord_y < 0) {
-        new_coord_y = user_coords.y as i8;
-    };
     Coord {
         x: new_coord_x as usize,
         y: new_coord_y as usize,

@@ -1,12 +1,12 @@
 use crate::api::command_service::get_user_input;
 use crate::api::file_service::{read_file, validate_file};
-use crate::api::map_service::{create_map, get_dimentions};
-use crate::api::movement_service::{Move, process_input, process_move};
-use crate::api::constants::{BOX_STR, WALL_U8, TARGET_STR, PLAYER_STR, QUIT, BOX_U8, BOX_ON_TARGET_STR, ERR_GETTING_INPUT};
-use crate::api::utils::delete_enters;
+use crate::api::map_service::{create_map, get_dimentions, refresh_map};
+use crate::api::movement_service::{process_input};
+use crate::api::constants::{BOX_STR, WALL_U8, TARGET_STR, PLAYER_STR, QUIT, BOX_U8, BOX_ON_TARGET_STR, ERR_GETTING_INPUT, BOX_ON_TARGET_U8, TARGET_U8, PLAYER_U8, AIR_U8};
+use crate::api::utils::{delete_enters, is_object};
 use crate::api::ux::{print_map, show_goodbye, show_victory, show_welcome};
 use std::fmt::Debug;
-use crate::api::coord_service::Coord;
+use crate::api::coord_service::{Coord, equals_to, get_deltas, get_next_coord, update_coords};
 use crate::SokobanError::{CommandError, FileError};
 
 #[derive(Debug)]
@@ -23,48 +23,31 @@ pub struct Sokoban {
     pub user_coords: Coord,
     pub target_coords: Vec<Coord>,
     pub boxes_coords: Vec<Coord>,
-    pub boxes_on_target_coords: Vec<Coord>,
     pub rows: usize,
     pub columns: usize,
 }
 
+#[derive(Debug)]
+pub enum Move {
+    Up,
+    Left,
+    Down,
+    Right,
+}
+
 pub fn get_coords(
-    mut coords: String,
+    mut map_string: String,
     object: &str,
     rows: usize,
     columns: usize,
 ) -> Result<Vec<Coord>, SokobanError> {
     let mut row = 0;
     let mut column = 0;
-    let mut coord_vec = vec![Coord { x: 0, y: 0 }];
+    let mut coord_vec = Vec::new();
 
-    // todo no va a entrar porque no se llama a la funcion con box_str
-    if object == BOX_STR {
-        return Ok(vec![
-            Coord { x: 3, y: 2 },
-            Coord { x: 4, y: 3 },
-            Coord { x: 4, y: 4 },
-            Coord { x: 1, y: 6 },
-            Coord { x: 3, y: 6 },
-            Coord { x: 4, y: 6 },
-            Coord { x: 5, y: 6 },
-        ]);
-    } /* else if object == TARGET_STR {
-          return Ok(vec![
-              Coord { x: 1, y: 2 },
-              Coord { x: 5, y: 3 },
-              Coord { x: 1, y: 4 },
-              Coord { x: 4, y: 5 },
-              Coord { x: 3, y: 6 },
-              Coord { x: 6, y: 6 },
-              Coord { x: 4, y: 7 },
-          ]);
-      }*/
-
-    coords = delete_enters(&mut coords); //Agregue esto
-    // ->  cuando entra aca ya no deberia haber enters, se llama a delete enters antes de este llamado
-    while row < rows && !coords.is_empty() {
-        if coords.remove(0).to_string() == object.to_string() {
+     while row < rows && !map_string.is_empty() {
+        // todo refactor
+        if map_string.remove(0).to_string() == object.to_string() {
             let new_coord = Coord { x: column, y: row };
             coord_vec.push(new_coord);
         }
@@ -75,49 +58,7 @@ pub fn get_coords(
             column += 1;
         }
     }
-    coord_vec.remove(0);
     Ok(coord_vec)
-}
-
-// ==== BORRAR DESDE ACA =====
-
-fn is_wall(coords: &Coord, map: &Vec<Vec<u8>>) -> bool {
-    return map[coords.y as usize][coords.x as usize] == WALL_U8;
-}
-
-fn is_player(coord: &Coord, player_coords: &Coord) -> bool {
-    if coord.x == player_coords.x && coord.y == player_coords.y {
-        return true;
-    } else {
-        return false;
-    }
-}
-
-fn is_box(coord: &Coord, boxes_coords: &Vec<Coord>) -> bool {
-    for box_coords in boxes_coords.iter() {
-        if coord.x == box_coords.x && coord.y == box_coords.y {
-            return true;
-        }
-    }
-    return false;
-}
-
-fn is_target(coord: &Coord, boxes_targets: &Vec<Coord>) -> bool {
-    for box_target in boxes_targets.iter() {
-        if coord.x == box_target.x && coord.y == box_target.y {
-            return true;
-        }
-    }
-    return false;
-}
-
-// ======== HASTA ACA ====== al terminar el front
-
-fn append_targets(targets: &mut Vec<Coord>, boxes_on_targets: &Vec<Coord>){
-    for box_on_target in boxes_on_targets {
-        let coord = Coord{x:box_on_target.x, y:box_on_target.y};
-        targets.push(coord);
-    }
 }
 
 impl Sokoban {
@@ -127,69 +68,91 @@ impl Sokoban {
         let mut map = create_map(input.clone(), rows, columns);
 
         let mut target_coords = get_coords(input.clone(), TARGET_STR, rows, columns)?;
-        let boxes_on_target_coords = get_coords(input.clone(), BOX_ON_TARGET_STR, rows, columns)?;
-        append_targets(&mut target_coords, &boxes_on_target_coords);
+        let mut boxes_on_target_coords = get_coords(input.clone(), BOX_ON_TARGET_STR, rows, columns)?;
+        target_coords.append(&mut boxes_on_target_coords.clone());
 
-        let boxes_coords = get_coords(input.clone(), BOX_STR, rows, columns)?;
+        let mut boxes_coords = get_coords(input.clone(), BOX_STR, rows, columns)?;
+        boxes_coords.append(&mut boxes_on_target_coords);
+
         let mut vec_user_coords = get_coords(input.clone(), PLAYER_STR, rows, columns)?;
 
         Ok(Sokoban {
             map,
-            user_coords: vec_user_coords.remove(0),
+            user_coords: vec_user_coords.remove(0), // todo refactor
             target_coords,
             boxes_coords,
-            boxes_on_target_coords,
             rows,
             columns,
         })
     }
-
-    pub fn print_map(&self) {
-        for j in 0..self.rows {
-            /*pub map: Vec<Vec<u8>>,
-            pub user_coords: Coord,
-            pub boxes_coords: Vec<Coord>,
-            pub target_coords: Vec<Coord>,*/
-            let row: &Vec<u8> = &self.map[j];
-            for i in 0..self.columns {
-                let cell: u8 = row[i];
-                let coord: Coord = Coord { x: i, y: j };
-                if cell == WALL_U8 {
-                    print!("#");
-                } else if is_player(&coord, &self.user_coords) {
-                    print!("P");
-                }
-                /*else if is_box(&coord, &self.boxes_coords) {
-                    if is_target(&coord, &self.target_coords) {
-                        print!("*");
-                    } else {
-                        print!("=");
-                    }
-                }*/
-                else if is_target(&coord, &self.target_coords) {
-                    print!("+");
-                } else {
-                    print!(" ");
-                }
-                print!(" ");
-            }
-            println!("");
-        }
-    }
 }
 
 fn end_game(input: &String) -> bool {
-    return if input == QUIT {
-        show_goodbye();
-        true
-    } else { false }
+    input == QUIT
 }
 
 pub fn won_game(sokoban: &mut Sokoban) -> bool {
-    return if sokoban.boxes_on_target_coords.len() == sokoban.target_coords.len() {
-        print_map(sokoban);
-        true
-    } else { false }
+    for box_coords in &sokoban.boxes_coords {
+        let mut found = false;
+        for target in &sokoban.target_coords {
+            if equals_to(box_coords, target) {
+                found = true;
+                break;
+            }
+        }
+        if !found {
+            return false;
+        }
+    }
+    return true;
+}
+
+pub fn process_move(sokoban: &mut Sokoban, movement: Move) {
+    let (delta_x, delta_y) = get_deltas(movement);
+    let mut next_coord: Coord = get_next_coord(&sokoban.user_coords, delta_x, delta_y);
+    let mut next_next_coord = get_next_coord(&next_coord, delta_x, delta_y);
+
+    if is_object(&next_coord, WALL_U8, &sokoban.map) {
+        return;
+    }
+
+    if is_object(&next_coord, BOX_U8, &sokoban.map)
+        || is_object(&next_coord, BOX_ON_TARGET_U8, &sokoban.map) {
+
+        if !(is_object(&next_next_coord, AIR_U8, &sokoban.map)
+            || is_object(&next_next_coord, TARGET_U8, &sokoban.map)){
+            return;
+        }
+        move_box(&mut sokoban.map, &mut next_coord, &mut next_next_coord, &sokoban.target_coords, &mut sokoban.boxes_coords);
+    }
+    move_player(&mut sokoban.map, &mut sokoban.user_coords, &next_coord, &sokoban.target_coords);
+}
+
+fn move_player(map: &mut Vec<Vec<u8>>, coords_from: &mut Coord, coords_to: &Coord, target_coords: &Vec<Coord>) {
+    refresh_map(map, coords_from, coords_to, target_coords, PLAYER_U8);
+    update_coords(coords_from, coords_to);
+}
+
+fn move_box(
+    map: &mut Vec<Vec<u8>>, coords_from: &mut Coord, coords_to: &mut Coord, target_coords: &Vec<Coord>,
+    boxes_coords: &mut Vec<Coord>) {
+    let move_to_target = is_object(&coords_to, TARGET_U8, map);
+    let move_from_target = is_object(&coords_from, BOX_ON_TARGET_U8, map);
+
+    match boxes_coords.iter().position(|b| equals_to(b, coords_from)){
+        None => {}
+        Some(index_to_remove) => {
+            boxes_coords.remove(index_to_remove);
+            boxes_coords.push(Coord{x:coords_to.x, y:coords_to.y});
+        }
+    }
+    refresh_map(map, coords_from, coords_to, target_coords, BOX_U8);
+    if move_from_target{
+        map[coords_to.y][coords_to.x] = BOX_U8;
+    }
+    if move_to_target{
+        map[coords_to.y][coords_to.x] = BOX_ON_TARGET_U8;
+    }
 }
 
 pub fn play(input: &String) -> Result<(), SokobanError> {
@@ -202,8 +165,8 @@ pub fn play(input: &String) -> Result<(), SokobanError> {
         Err(error) => return Err(error),
     };
 
+    print_map(&mut sokoban);
     while !won_game(&mut sokoban) {
-        print_map(&mut sokoban);
         let input = match get_user_input() {
             Ok(i) => i,
             Err(_) => return Err(CommandError(ERR_GETTING_INPUT.to_string())),
@@ -213,6 +176,8 @@ pub fn play(input: &String) -> Result<(), SokobanError> {
         }
         let movement: Move = process_input(&input);
         process_move(&mut sokoban, movement);
+        print_map(&mut sokoban);
     }
+    show_goodbye();
     Ok(())
 }
