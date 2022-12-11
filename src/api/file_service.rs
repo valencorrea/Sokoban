@@ -5,14 +5,6 @@ use std::io::Read;
 use std::ops::Add;
 use crate::api::command_service::valid_map_object;
 
-// todo deprecar
-#[derive(Debug)]
-pub enum FileError {
-    ReadError(String),
-    WriteError(String),
-    FormatError(String),
-}
-
 pub fn read_file(path: &String) -> Result<String, SokobanError> {
     let f = File::open(path);
 

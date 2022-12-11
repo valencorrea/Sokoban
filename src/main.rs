@@ -46,11 +46,18 @@ use api::WHAT_TO_RUN_POS;
 use crate::api::server;
 use crate::api::client;
 use crate::api::sokoban_service::{play, SokobanError};
-use crate::front::window::run_app;
+//use crate::front::window::run_app;
 
 fn main() -> Result<(), SokobanError> { // todo generalizar error
+    let argv = args().collect::<Vec<String>>();
 
-    run_app().expect("TODO: panic message");
+    match play(&argv[1]) { // todo mencionar como ventaja del lenguaje
+        Ok(_) => Ok(()),
+        Err(err) => Err(err)
+    }.expect("TODO: panic message");
+
+
+        //run_app().expect("TODO: panic message");
     
 //fn main() -> std::io::Result<()> {
 //    let argv = args().collect::<Vec<String>>();

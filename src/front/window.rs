@@ -1,4 +1,4 @@
-use crate::SokobanError;
+/*use crate::SokobanError;
 
 extern crate gio;
 extern crate glib;
@@ -6,7 +6,7 @@ extern crate gtk;
 
 use gio::{prelude::*};
 use glib::{clone};
-use gtk::{prelude::*, ApplicationWindow, Builder, Button, Entry, TextBuffer, ScrolledWindow, ListBox, Widget, Label};
+use gtk::{prelude::*, ApplicationWindow, Builder, Button, Entry, TextBuffer, ScrolledWindow, ListBox, Widget, Label, gdk};
 
 
 fn show_ui() {
@@ -21,6 +21,13 @@ fn show_ui() {
     let right_button: Button = builder.object("right_button").expect("Couldn't get button");
     let up_button: Button = builder.object("up_button").expect("Couldn't get button");
     let down_button: Button = builder.object("down_button").expect("Couldn't get button");
+
+    let mut left_event: gdk::Event = gdk::Event::new(gdk::EventType::KeyPress);
+
+    left_event.connect_key_press_event(|_, _| {
+        println!("key pressed");
+        Inhibit(false)
+    });
 
     left_button.connect_clicked(|_| {
         println!("clicked");
@@ -43,3 +50,4 @@ pub fn run_app() -> Result<(), SokobanError> {
     show_ui();
     Ok(())
 }
+*/

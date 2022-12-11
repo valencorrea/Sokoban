@@ -1,4 +1,4 @@
-use crate::api::constants::{BOX_ON_TARGET_U8, BOX_U8, EMPTY_PLACE_U8, ENTER_U8, TARGET_U8};
+use crate::api::constants::{AIR_U8, BOX_ON_TARGET_U8, BOX_U8, ENTER_U8, TARGET_U8};
 use crate::api::coord_service::Coord;
 
 fn rows(bytes: &[u8]) -> usize {
@@ -24,14 +24,12 @@ pub fn get_dimentions(map: &String) -> (usize, usize) {
 
 pub fn create_map(mut input: String, rows: usize, columns: usize) -> Vec<Vec<u8>> {
     let mut map = vec![vec![0; columns]; rows];
-    let mut map_str = vec![vec![' '; columns]; rows]; // todo para que lo usamos?
     let mut row = 0;
     let mut column = 0;
 
     while row < rows && !input.is_empty() {
-        let cell = input.remove(0); // todo mencionar casteos
+        let cell = input.remove(0);
         map[row][column] = cell as u8;
-        map_str[row][column] = cell;
         if column == columns - 1 {
             column = 0;
             row += 1;
@@ -48,19 +46,14 @@ pub fn refresh_map(
     coords_to: &Coord,
     target_coords: &Vec<Coord>,
     object: u8,
-    boxes_on_target_coords: &Vec<Coord>,
-    boxes_coords: &Vec<Coord>
 ) {
     map[coords_to.y][coords_to.x] = object;
 
     if target_coords.contains(coords_from) {
         map[coords_from.y][coords_from.x] = TARGET_U8;
-    } else if boxes_coords.contains(coords_from) {
-        map[coords_from.y][coords_from.x] = BOX_U8;
-    } else if boxes_on_target_coords.contains(coords_from) {
-        map[coords_from.y][coords_from.x] = BOX_ON_TARGET_U8;
-    } else {
-        map[coords_from.y][coords_from.x] = EMPTY_PLACE_U8;
+    }
+     else {
+        map[coords_from.y][coords_from.x] = AIR_U8;
     }
 }
 
