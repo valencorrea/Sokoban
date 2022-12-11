@@ -1,4 +1,4 @@
-/*use crate::SokobanError;
+use crate::SokobanError;
 
 extern crate gio;
 extern crate glib;
@@ -16,6 +16,8 @@ fn show_ui() {
 
     let scrolled: ScrolledWindow = builder.object("window_scrolled").expect("Couldn't get scrolled window");
     let window: ApplicationWindow = builder.object("Window").expect("Couldn't get Window");
+    let command_entry: Entry = builder.object("command_entry").expect("Couldn't get command entry");
+    let textbuffer: TextBuffer = builder.object("textbuffer_message").expect("Couldn't get text buffer");
 
     let left_button: Button = builder.object("left_button").expect("Couldn't get button");
     let right_button: Button = builder.object("right_button").expect("Couldn't get button");
@@ -24,11 +26,7 @@ fn show_ui() {
 
     let mut left_event: gdk::Event = gdk::Event::new(gdk::EventType::KeyPress);
 
-    left_event.connect_key_press_event(|_, _| {
-        println!("key pressed");
-        Inhibit(false)
-    });
-
+    // on click
     left_button.connect_clicked(|_| {
         println!("clicked");
     });
@@ -42,6 +40,13 @@ fn show_ui() {
     down_button.connect_clicked(|_| {
     });*/
 
+    // on enter
+    command_entry.connect_activate(clone!(@weak command_entry => move |_|
+        let command = command_entry.text(); // la validacion deberia tomarse desde el back
+        println!("command: {}", command); // solo para probar que toma el comando, borrar
+        command_entry.set_text("");
+    ));
+
     window.show_all();
     gtk::main();
 }
@@ -50,4 +55,3 @@ pub fn run_app() -> Result<(), SokobanError> {
     show_ui();
     Ok(())
 }
-*/
