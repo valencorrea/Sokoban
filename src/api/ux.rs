@@ -9,7 +9,6 @@ pub fn show_welcome() {
 
 pub fn show_goodbye() {
     println!("Gracias por jugar! Nos vemos!");
-    //show()_results();
 }
 
 // todo agregar h de ayuda y que muestre de nuevo los comandos
@@ -27,7 +26,6 @@ pub fn show_victory() {
 }
 
 pub fn ask_for_command() {
-    // todo: si no te los acordas preisona h
     println!("Escribe tu movimiento o Q para cerrar el juego.")
 }
 
@@ -44,10 +42,8 @@ pub fn get_object(map_object: u8) -> &'static str {
         BOX_ON_TARGET_STR
     } else {
         AIR_STR
-    }; // la opc restante es enter
+    };
 }
-
-//todo move no debe estar actualizando el struct sokoban
 
 pub fn print_map(sokoban: &mut Sokoban) {
     let mut str_map = String::new();

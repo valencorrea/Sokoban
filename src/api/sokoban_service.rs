@@ -1,11 +1,12 @@
 use crate::api::command_service::get_user_input;
 use crate::api::file_service::{read_file, validate_file};
 use crate::api::map_service::{create_map, get_dimentions};
-use crate::api::movement_service::{process_input, process_move, victory};
-use crate::api::constants::{BOX_STR, WALL_U8, TARGET_STR, PLAYER_STR, QUIT, BOX_U8, BOX_ON_TARGET_STR};
-use crate::api::utils::delete_enters;
+use crate::api::movement_service::{Move, process_input, process_move, won_game};
+use crate::api::constants::{BOX_STR, WALL_U8, TARGET_STR, PLAYER_STR, QUIT, BOX_U8, BOX_ON_TARGET_STR, ERR_GETTING_INPUT};
+use crate::api::_utils::delete_enters;
 use crate::api::ux::{print_map, show_goodbye, show_victory, show_welcome};
 use std::fmt::Debug;
+use crate::api::coord_service::Coord;
 use crate::SokobanError::{CommandError, FileError};
 
 #[derive(Debug)]
@@ -16,31 +17,16 @@ pub enum SokobanError {
     CommandError(String),
 }
 
-#[derive(Debug, PartialEq)]
-pub struct Coord {
-    pub x: usize,
-    pub y: usize,
-}
-
-#[derive(Debug)]
-pub enum Move {
-    Up,
-    Left,
-    Down,
-    Right,
-}
-
 #[derive(Debug)]
 pub struct Sokoban {
     pub map: Vec<Vec<u8>>,
     pub user_coords: Coord,
     pub target_coords: Vec<Coord>,
-    pub boxes_coords: Vec<Coord>, // ver si lo saco
+    pub boxes_coords: Vec<Coord>,
     pub boxes_on_target_coords: Vec<Coord>,
     pub rows: usize,
     pub columns: usize,
 }
-
 
 pub fn get_coords(
     mut coords: String,
@@ -50,11 +36,8 @@ pub fn get_coords(
 ) -> Result<Vec<Coord>, SokobanError> {
     let mut row = 0;
     let mut column = 0;
-    let mut coord_vec = vec![Coord { x: 0, y: 0 }]; // todo al final eliminar el primero
+    let mut coord_vec = vec![Coord { x: 0, y: 0 }];
 
-    /*if object == PLAYER_STR {
-        return Ok(vec![Coord { x: 2, y: 2 }]);
-    } else*/
     // todo no va a entrar porque no se llama a la funcion con box_str
     if object == BOX_STR {
         return Ok(vec![
@@ -79,6 +62,7 @@ pub fn get_coords(
       }*/
 
     coords = delete_enters(&mut coords); //Agregue esto
+    // ->  cuando entra aca ya no deberia haber enters, se llama a delete enters antes de este llamado
     while row < rows && !coords.is_empty() {
         if coords.remove(0).to_string() == object.to_string() {
             let new_coord = Coord { x: column, y: row };
@@ -91,18 +75,9 @@ pub fn get_coords(
             column += 1;
         }
     }
-    coord_vec.remove(0); // elimino el que use para inicializar
+    coord_vec.remove(0);
     Ok(coord_vec)
 }
-
-/*pub fn initialize_coords(sokoban: &mut Vec<Vec<u8>>, coords: &Vec<Coord>, object: u8) {
-    for coord in coords.iter() {
-        sokoban[coord.y][coord.x] = object;
-    }
-}*/
-
-// todo mencionar como ventaja el que pueden ser estaticos o mutables
-// todo otra ventaja lifetimes? usarlo en algun lado
 
 // ==== BORRAR DESDE ACA =====
 
@@ -149,32 +124,18 @@ impl Sokoban {
     pub fn new(input: &mut String) -> Result<Self, SokobanError> {
         let (rows, columns) = get_dimentions(input);
         let input = delete_enters(input);
-        let mut map = create_map(input.clone(), rows, columns); // todo mencionar desventajas
+        let mut map = create_map(input.clone(), rows, columns);
 
-        let mut target_coords = match get_coords(input.clone(), TARGET_STR, rows, columns) {
-            Ok(t) => t,
-            Err(err) => return Err(err),
-        };
-
-        let boxes_on_target_coords = match get_coords(input.clone(), BOX_ON_TARGET_STR, rows, columns) {
-            Ok(t) => t,
-            Err(err) => return Err(err),
-        };
+        let mut target_coords = get_coords(input.clone(), TARGET_STR, rows, columns)?;
+        let boxes_on_target_coords = get_coords(input.clone(), BOX_ON_TARGET_STR, rows, columns)?;
         append_targets(&mut target_coords, &boxes_on_target_coords);
 
-        let boxes_coords = match get_coords(input.clone(), BOX_STR, rows, columns) {
-            Ok(t) => t,
-            Err(err) => return Err(err),
-        };
-
-        let mut vec_user_coords = match get_coords(input.clone(), PLAYER_STR, rows, columns) {
-            Ok(t) => t,
-            Err(err) => return Err(err),
-        };
+        let boxes_coords = get_coords(input.clone(), BOX_STR, rows, columns)?;
+        let mut vec_user_coords = get_coords(input.clone(), PLAYER_STR, rows, columns)?;
 
         Ok(Sokoban {
             map,
-            user_coords: vec_user_coords.remove(0), // devuelve la primera posicion
+            user_coords: vec_user_coords.remove(0),
             target_coords,
             boxes_coords,
             boxes_on_target_coords,
@@ -217,13 +178,16 @@ impl Sokoban {
     }
 }
 
-// todo refactorizar
+fn end_game(input: &String) -> bool {
+    return if input == QUIT {
+        show_goodbye();
+        true
+    } else { false }
+}
+
 pub fn play(input: &String) -> Result<(), SokobanError> {
     show_welcome();
-    let mut map = match read_file(input) {
-        Ok(result) => result,
-        Err(error) => return Err(error),
-    };
+    let mut map = read_file(input)?;
     validate_file(&map)?;
 
     let mut sokoban = match Sokoban::new(&mut map) {
@@ -231,28 +195,17 @@ pub fn play(input: &String) -> Result<(), SokobanError> {
         Err(error) => return Err(error),
     };
 
-    loop {
+    while !won_game(&mut sokoban) {
         print_map(&mut sokoban);
         let input = match get_user_input() {
             Ok(i) => i,
-            Err(_) => return Err(CommandError(String::from("Error while getting user input.\n"))),
+            Err(_) => return Err(CommandError(ERR_GETTING_INPUT.to_string())),
         };
-        if input == QUIT {
-            show_goodbye();
+        if end_game(&input){
             break;
         }
         let movement: Move = process_input(&input);
         process_move(&mut sokoban, movement);
-
-        if victory(&sokoban) {
-            print_map(&mut sokoban);
-            show_victory();
-            break;
-        }
     }
-
-    show_goodbye();
     Ok(())
 }
-
-
