@@ -2,11 +2,21 @@ use std::io;
 use std::io::{BufRead, BufReader, Write};
 use std::net::TcpStream;
 
-fn is_valid_input(input: &String) -> bool {
-    return input == "W" || input == "A" || input == "S" || input == "D" || input == "Q";
+use super::utils::{show_commands, show_welcome, invalid_command};
+
+fn is_valid_input(input: String) -> bool {
+    let s: Vec<&str> = input.split(" ").collect();
+
+    if s[0] == "QUIT" { return true; }
+
+    if s[0] != "MOVE" { return false; }
+
+    return s[1] == "W" || s[1] == "A" || s[1] == "S" || s[1] == "D";
 }
 
 pub fn run() -> std::io::Result<()> {
+    show_welcome();
+
     let stream: TcpStream = TcpStream::connect("127.0.0.1:7878")?;
 
     let mut stream_clone = match stream.try_clone() {
@@ -23,10 +33,15 @@ pub fn run() -> std::io::Result<()> {
     let mut input: String = String::new();
     loop {
         input.clear();
-        println!("Escribe tu movimiento (WASD) o QUIT para cerrar el juego:");
+        show_commands();
         io::stdin()
             .read_line(&mut input)
             .expect("Failed to read line");
+
+        if !is_valid_input(input.trim_end().to_owned()) {
+            invalid_command();
+            continue;
+        }
 
         stream_clone.write_all(input.as_bytes())?;
         if let Some(l) = lines.next() {

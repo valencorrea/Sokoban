@@ -1,9 +1,9 @@
-use crate::api::sokoban_service::SokobanError;
 use crate::api::constants::{BOX_U8, WALL_U8, TARGET_U8, ENTER_U8, PLAYER_U8, AIR_U8, BOX_ON_TARGET_U8, ERR_FILE_FORMAT};
 use std::fs::File;
 use std::io::Read;
 use std::ops::Add;
-use crate::api::command_service::valid_map_object;
+
+use super::sokoban::SokobanError;
 
 // todo deprecar
 #[derive(Debug)]
@@ -39,4 +39,16 @@ pub fn validate_file(file: &String) -> Result<&String, SokobanError> {
         }
     }
     Ok(file)
+}
+
+pub fn valid_map_object(command: u8) -> bool {
+    return if (command != BOX_U8)
+        && (command != WALL_U8)
+        && (command != TARGET_U8)
+        && (command != ENTER_U8)
+        && (command != PLAYER_U8)
+        && (command != AIR_U8)
+        && (command != BOX_ON_TARGET_U8) {
+        false
+    } else { true }
 }

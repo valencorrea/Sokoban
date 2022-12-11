@@ -9,3 +9,38 @@ pub fn delete_enters(input: &mut String) -> String {
     }
     output
 }
+
+pub fn show_welcome() {
+    println!("\nBienvenidos al Sokoban!\n");
+    println!("El objetivo del juego es empujar cada caja a un objetivo. ¡Suerte!\n");
+    show_commands();
+}
+
+pub fn show_goodbye() {
+    println!("Gracias por jugar! Nos vemos!");
+}
+
+// todo agregar h de ayuda y que muestre de nuevo los comandos
+pub fn show_commands() {
+    println!("Comandos validos:");
+    println!("\tMOVE A - LEFT");
+    println!("\ttMOVE W - UP");
+    println!("\ttMOVE D - RIGHT");
+    println!("\ttMOVE S - DOWN");
+    println!("\ttQUIT - QUIT");
+    println!("\n");
+}
+
+pub fn show_victory() {
+    println!("\nFelicitaciones!\nHas vencido el juego. Gracias por jugar.\n");
+}
+
+pub fn invalid_command(){
+    println!("Comando invalido.");
+    show_commands();
+    ask_for_command();
+}
+
+pub fn ask_for_command() {
+    println!("Escribe tu movimiento o QUIT para cerrar el juego:")
+}

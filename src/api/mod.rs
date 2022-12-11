@@ -1,14 +1,11 @@
-mod command_service;
-mod file_service;
-mod map_service;
-pub(crate) mod sokoban_service;
-mod utils;
-mod ux;
-
+pub mod sokoban;
+pub mod movement;
+pub mod constants;
 pub mod server;
 pub mod client;
-pub mod coord_service;
-pub mod movement_service;
-pub mod constants;
+pub mod coord;
+
+mod file_service;
+mod utils;
 
 pub const WHAT_TO_RUN_POS: usize = 1;
