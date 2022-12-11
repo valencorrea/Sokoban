@@ -22,6 +22,9 @@ pub const LEFT: &str = "A";
 pub const RIGHT: &str = "D";
 pub const QUIT: &str = "Q";
 
+pub const ERR_GETTING_INPUT: &str = "Error while getting user input.\n";
+pub const ERR_FILE_FORMAT: &str = "File format Error.\n";
+
 pub const MAP_01: [[u8; 8]; 9] = [
     [0, 0, 1, 1, 1, 1, 1, 0],
     [1, 1, 1, 0, 0, 0, 1, 0],
