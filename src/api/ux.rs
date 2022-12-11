@@ -1,8 +1,5 @@
 use crate::api::sokoban_service::Sokoban;
-use crate::api::constants::{
-    AIR_STR, BOX_STR, BOX_U8, ENTER_STR, PLAYER_STR, PLAYER_U8, TARGET_STR, TARGET_U8, WALL_STR,
-    WALL_U8,
-};
+use crate::api::constants::{AIR_STR, AIR_U8, BOX_ON_TARGET_STR, BOX_ON_TARGET_U8, BOX_STR, BOX_U8, ENTER_STR, ENTER_STR2, PLAYER_STR, PLAYER_U8, TARGET_STR, TARGET_U8, WALL_STR, WALL_U8};
 
 pub fn show_welcome() {
     println!("\nBienvenidos al Sokoban!\n");
@@ -22,6 +19,7 @@ pub fn show_commands() {
     println!("\tW - UP");
     println!("\tD - RIGHT");
     println!("\tS - DOWN");
+    println!("\n");
 }
 
 pub fn show_victory() {
@@ -42,12 +40,15 @@ pub fn get_object(map_object: u8) -> &'static str {
         BOX_STR
     } else if map_object == TARGET_U8 {
         TARGET_STR
+    } else if map_object == BOX_ON_TARGET_U8 {
+        BOX_ON_TARGET_STR
     } else {
         AIR_STR
-    };
+    }; // la opc restante es enter
 }
 
 //todo move no debe estar actualizando el struct sokoban
+
 pub fn print_map(sokoban: &mut Sokoban) {
     let mut str_map = String::new();
     for row in 0..sokoban.rows {
@@ -55,7 +56,8 @@ pub fn print_map(sokoban: &mut Sokoban) {
             let object = get_object(sokoban.map[row][column]);
             str_map.push(object.parse().unwrap());
         }
-        str_map.push_str(ENTER_STR);
+        str_map.push_str(ENTER_STR2);
     }
+
     println!("{}", str_map);
 }

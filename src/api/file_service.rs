@@ -1,5 +1,5 @@
 use crate::api::sokoban_service::SokobanError;
-use crate::api::constants::{BOX_U8, WALL_U8, TARGET_U8, ENTER_U8, PLAYER_U8, AIR_U8};
+use crate::api::constants::{BOX_U8, WALL_U8, TARGET_U8, ENTER_U8, PLAYER_U8, AIR_U8, BOX_ON_TARGET_U8};
 use std::fs::File;
 use std::io::Read;
 use std::ops::Add;
@@ -38,6 +38,7 @@ pub fn validate_file(file: &String) -> Result<&String, SokobanError> {
             && (*char != ENTER_U8)
             && (*char != PLAYER_U8)
             && (*char != AIR_U8)
+            && (*char != BOX_ON_TARGET_U8)
         {
             return Err(SokobanError::FileError(String::from(
                 "Error en el formato del archivo.",

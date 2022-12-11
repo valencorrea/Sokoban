@@ -23,7 +23,7 @@ pub fn get_dimentions(map: &String) -> (usize, usize) {
 
 pub fn create_map(mut input: String, rows: usize, columns: usize) -> Vec<Vec<u8>> {
     let mut map = vec![vec![0; columns]; rows];
-    let mut map_str = vec![vec![' '; columns]; rows];
+    let mut map_str = vec![vec![' '; columns]; rows]; // todo para que lo usamos?
     let mut row = 0;
     let mut column = 0;
 
