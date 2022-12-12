@@ -1,5 +1,4 @@
 pub mod client;
-pub mod command_service;
 pub mod constants;
 pub mod coord_service;
 pub mod file_service;

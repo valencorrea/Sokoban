@@ -1,11 +1,5 @@
-// TODO Traer is_object
-// TODO Traer refresh_map
-// TODO Traer get_object
-// TODO Traer constantes
-// TODO Traer get_dimentions
-// TODO Traer get_map
-
-use crate::api::{constants::ENTER_STR2, ux::get_object};
+use crate::api::ux::get_object;
+use std::str;
 
 use super::{
     constants::{
@@ -20,10 +14,7 @@ use super::{
 
 #[derive(Debug)]
 pub enum SokobanError {
-    CoordError(String),
     FileError(String),
-    GTKError(String),
-    CommandError(String),
 }
 
 #[derive(Debug)]
@@ -37,9 +28,8 @@ pub struct Sokoban {
 }
 
 impl Sokoban {
-    // TODO OK
     pub fn create_from_path(argv: &String) -> Result<Self, SokobanError> {
-        let mut map = read_file(argv)?;
+        let map = read_file(argv)?;
         validate_file(&map)?;
 
         let mut input = map.to_owned();
@@ -80,12 +70,10 @@ impl Sokoban {
         str_map
     }
 
-    // TODO OK
-    pub fn print(&self) {
+    pub fn _print(&self) {
         println!("{}", self.to_str());
     }
 
-    // TODO OK
     fn refresh_map(&mut self, coords_from: &Coord, coords_to: &Coord, object: u8) {
         self.map[coords_to.y][coords_to.x] = object;
 
@@ -96,13 +84,11 @@ impl Sokoban {
         }
     }
 
-    // TODO OK
     fn move_player(&mut self, coords_to: &Coord) {
         self.refresh_map(&self.user_coords.to_owned(), coords_to, PLAYER_U8);
         self.user_coords = coords_to.to_owned();
     }
 
-    // TODO OK
     fn move_box(&mut self, coords_from: &mut Coord, coords_to: &mut Coord) {
         let move_to_target = self.is_object(&coords_to, TARGET_U8);
         let move_from_target = self.is_object(&coords_from, BOX_ON_TARGET_U8);
@@ -130,7 +116,6 @@ impl Sokoban {
         }
     }
 
-    // TODO OK
     pub fn process_move(&mut self, movement: Move) -> String {
         let (delta_x, delta_y) = get_deltas(movement);
         let mut next_coord: Coord = get_next_coord(&self.user_coords, delta_x, delta_y);
@@ -153,12 +138,10 @@ impl Sokoban {
         return self.to_str();
     }
 
-    // TODO OK
     pub fn is_object(&self, next_coord: &Coord, object_to_compare: u8) -> bool {
         return self.map[next_coord.y as usize][next_coord.x as usize] == object_to_compare;
     }
 
-    // TODO OK
     pub fn victory(&self) -> bool {
         for box_coords in self.boxes_coords.iter() {
             let mut found = false;
@@ -176,7 +159,6 @@ impl Sokoban {
     }
 }
 
-// TODO OK
 pub fn get_coords(
     mut map_string: String,
     object: &str,
@@ -188,7 +170,6 @@ pub fn get_coords(
     let mut coord_vec = Vec::new();
 
     while row < rows && !map_string.is_empty() {
-        // todo refactor
         if map_string.remove(0).to_string() == object.to_string() {
             let new_coord = Coord { x: column, y: row };
             coord_vec.push(new_coord);

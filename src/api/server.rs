@@ -1,26 +1,17 @@
-// TODO Traer Sokoban
-// TODO traer get_deltas
-// TODO Traer get_next_coord
-// TODO Traer is_object
-
 use std::{
-    borrow::BorrowMut,
-    collections::{HashMap, VecDeque},
-    hash::Hash,
+    collections::VecDeque,
     io::{BufRead, BufReader, Write},
     net::{TcpListener, TcpStream},
-    ops::Deref,
     sync::{Arc, Condvar, Mutex},
     thread::{self, JoinHandle},
 };
 
 use super::{
-    constants::{DOWN, LEFT, RIGHT, UP},
-    sokoban::{Sokoban, SokobanError},
+    constants::{DOWN, LEFT, UP},
+    sokoban::Sokoban,
     utils::Move,
 };
 
-// TODO OK
 #[derive(Debug)]
 pub struct Server {
     sokoban: Mutex<Sokoban>,
@@ -30,7 +21,6 @@ pub struct Server {
 }
 
 impl Server {
-    // TODO OK
     pub fn create_from_map(sokoban: Sokoban) -> Server {
         Server {
             sokoban: Mutex::new(sokoban),
@@ -40,7 +30,6 @@ impl Server {
         }
     }
 
-    // TODO OK
     pub fn run(self) -> std::io::Result<()> {
         let s = Arc::new(self);
 
@@ -67,11 +56,14 @@ impl Server {
                     pop.shutdown(std::net::Shutdown::Both).unwrap();
                 }
 
+                println!("Finished closing TCPs");
+
                 let mut to_join = ss.thr_clients.lock().unwrap();
 
                 while let Some(pop) = to_join.pop() {
                     pop.join().unwrap();
                 }
+                println!("Finished joining threads");
             }
         });
 
@@ -183,7 +175,6 @@ impl Server {
     }
 }
 
-// TODO OK
 pub fn process_input(input: &str) -> Move {
     return if input == UP {
         Move::Up
