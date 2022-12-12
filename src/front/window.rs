@@ -1,23 +1,36 @@
+use std::sync::{
+    mpsc::{Receiver, Sender},
+    Arc,
+};
+
 use crate::SokobanError;
 
 extern crate gio;
 extern crate glib;
 extern crate gtk;
 
-use gio::{prelude::*};
-use glib::{clone};
-use gtk::{prelude::*, ApplicationWindow, Builder, Button, Entry, TextBuffer, ScrolledWindow, ListBox, Widget, Label, gdk};
+use gio::prelude::*;
+use glib::clone;
+use gtk::{
+    gdk, prelude::*, ApplicationWindow, Builder, Button, Entry, Label, ListBox, ScrolledWindow,
+    TextBuffer, Widget,
+};
 
-
-fn show_ui() {
+fn show_ui(tx: Arc<Sender<String>>, rx: Arc<Receiver<String>>) {
     gtk::init().expect("Couldn't open Window");
     let glade_src = include_str!("window.glade");
     let builder = Builder::from_string(glade_src);
 
-    let scrolled: ScrolledWindow = builder.object("window_scrolled").expect("Couldn't get scrolled window");
+    let scrolled: ScrolledWindow = builder
+        .object("window_scrolled")
+        .expect("Couldn't get scrolled window");
     let window: ApplicationWindow = builder.object("Window").expect("Couldn't get Window");
-    let command_entry: Entry = builder.object("command_entry").expect("Couldn't get command entry");
-    let textbuffer: TextBuffer = builder.object("textbuffer_message").expect("Couldn't get text buffer");
+    let command_entry: Entry = builder
+        .object("command_entry")
+        .expect("Couldn't get command entry");
+    let textbuffer: TextBuffer = builder
+        .object("textbuffer_message")
+        .expect("Couldn't get text buffer");
 
     let left_button: Button = builder.object("left_button").expect("Couldn't get button");
     let right_button: Button = builder.object("right_button").expect("Couldn't get button");
@@ -51,7 +64,11 @@ fn show_ui() {
     gtk::main();
 }
 
-pub fn run_app() -> Result<(), SokobanError> {
-    show_ui();
+pub fn run_app(tx: Sender<String>, rx: Receiver<String>) -> Result<(), SokobanError> {
+    let t = Arc::new(tx);
+    let r = Arc::new(rx);
+
+    show_ui(t, r);
+
     Ok(())
 }

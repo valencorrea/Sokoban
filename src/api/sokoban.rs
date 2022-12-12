@@ -24,6 +24,7 @@ pub enum SokobanError {
     FileError(String),
     GTKError(String),
     CommandError(String),
+    ConnectionError(String),
 }
 
 #[derive(Debug)]
