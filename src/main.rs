@@ -62,7 +62,7 @@ fn main() -> Result<(), SokobanError> {
 
         let sokoban = match Sokoban::create_from_path(&map[1]) {
             Ok(v) => v,
-            Err(e) => panic!("SokobanError"),
+            Err(_) => panic!("SokobanError"),
         };
 
         let s = Server::create_from_map(sokoban);

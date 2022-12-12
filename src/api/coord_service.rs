@@ -20,8 +20,8 @@ pub fn get_deltas(movement: Move) -> (i8, i8) {
 }
 
 pub fn get_next_coord(user_coords: &Coord, delta_x: i8, delta_y: i8) -> Coord {
-    let mut new_coord_x = user_coords.x as i8 + delta_x;
-    let mut new_coord_y = user_coords.y as i8 + delta_y;
+    let new_coord_x = user_coords.x as i8 + delta_x;
+    let new_coord_y = user_coords.y as i8 + delta_y;
 
     Coord {
         x: new_coord_x as usize,

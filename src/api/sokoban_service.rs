@@ -1,5 +1,4 @@
-use crate::api::constants::{AIR_U8, BOX_ON_TARGET_U8, BOX_U8, ENTER_U8, TARGET_U8};
-use crate::api::coord_service::Coord;
+use crate::api::constants::ENTER_U8;
 
 fn rows(bytes: &[u8]) -> usize {
     let mut rows = 0;
@@ -40,24 +39,10 @@ pub fn create_map(mut input: String, rows: usize, columns: usize) -> Vec<Vec<u8>
     map
 }
 
-pub fn refresh_map(
-    map: &mut Vec<Vec<u8>>,
-    coords_from: &mut Coord,
-    coords_to: &Coord,
-    target_coords: &Vec<Coord>,
-    object: u8,
-) {
-    map[coords_to.y][coords_to.x] = object;
-
-    if target_coords.contains(coords_from) {
-        map[coords_from.y][coords_from.x] = TARGET_U8;
-    } else {
-        map[coords_from.y][coords_from.x] = AIR_U8;
-    }
-}
-
 #[cfg(test)]
 mod dimentions_tests {
+    use crate::api::constants::ENTER_U8;
+
     use super::*;
 
     #[test]

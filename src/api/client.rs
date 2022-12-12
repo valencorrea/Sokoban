@@ -11,7 +11,6 @@ use crate::api::utils::show_goodbye;
 use super::sokoban::{Sokoban, SokobanError};
 use super::utils::{ask_for_command, invalid_command, show_commands, show_victory, show_welcome};
 
-// TODO OK
 fn is_valid_input(input: String) -> bool {
     if input.len() == 0 {
         return true;
@@ -30,7 +29,6 @@ fn is_valid_input(input: String) -> bool {
     return s[1] == "W" || s[1] == "A" || s[1] == "S" || s[1] == "D";
 }
 
-// TODO OK
 pub fn run() -> std::io::Result<()> {
     let mut end_game = false;
 
@@ -52,7 +50,7 @@ pub fn run() -> std::io::Result<()> {
         while !end_game {
             if let Some(Ok(l)) = lines.next() {
                 let line = l.replace(TAB_STR, ENTER_STR2);
-                println!("[SERVER]: {} {} ", ENTER_STR2, line);
+                println!("[SERVER]:{}{}", ENTER_STR2, line);
                 if line.contains("CLOSING") {
                     stream.shutdown(std::net::Shutdown::Both).unwrap();
                     end_game = true;

@@ -1,6 +1,6 @@
-use crate::api::command_service::valid_map_object;
 use crate::api::constants::{
-    AIR_U8, BOX_ON_TARGET_U8, BOX_U8, ENTER_U8, ERR_FILE_FORMAT, PLAYER_U8, TARGET_U8, WALL_U8,
+    AIR_U8, BOX_ON_TARGET_U8, BOX_U8, ENTER2_U8, ENTER_U8, ERR_FILE_FORMAT, PLAYER_U8, TARGET_U8,
+    WALL_U8,
 };
 use std::fs::File;
 use std::io::Read;
@@ -29,8 +29,25 @@ pub fn read_file(path: &String) -> Result<String, SokobanError> {
 pub fn validate_file(file: &String) -> Result<&String, SokobanError> {
     for char in file.as_bytes() {
         if !valid_map_object(*char) {
+            println!("{}", char);
             return Err(SokobanError::FileError(ERR_FILE_FORMAT.to_string()));
         }
     }
     Ok(file)
+}
+
+pub fn valid_map_object(command: u8) -> bool {
+    return if (command != BOX_U8)
+        && (command != WALL_U8)
+        && (command != TARGET_U8)
+        && (command != ENTER_U8)
+        && (command != PLAYER_U8)
+        && (command != AIR_U8)
+        && (command != BOX_ON_TARGET_U8)
+        && (command != ENTER2_U8)
+    {
+        false
+    } else {
+        true
+    };
 }
