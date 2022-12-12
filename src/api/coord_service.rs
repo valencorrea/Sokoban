@@ -1,4 +1,4 @@
-use crate::api::sokoban_service::Move;
+use crate::api::_sokoban_service::Move;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Coord {

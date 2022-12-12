@@ -1,4 +1,4 @@
-use crate::api::sokoban_service::SokobanError;
+use crate::api::_sokoban_service::SokobanError;
 use crate::api::constants::{BOX_U8, WALL_U8, TARGET_U8, ENTER_U8, PLAYER_U8, AIR_U8, BOX_ON_TARGET_U8, ERR_FILE_FORMAT};
 use std::fs::File;
 use std::io::Read;

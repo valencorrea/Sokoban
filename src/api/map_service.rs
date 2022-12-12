@@ -51,8 +51,7 @@ pub fn refresh_map(
 
     if target_coords.contains(coords_from) {
         map[coords_from.y][coords_from.x] = TARGET_U8;
-    }
-     else {
+    } else {
         map[coords_from.y][coords_from.x] = AIR_U8;
     }
 }

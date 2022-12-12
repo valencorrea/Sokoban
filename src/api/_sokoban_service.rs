@@ -1,7 +1,7 @@
 use crate::api::command_service::get_user_input;
 use crate::api::file_service::{read_file, validate_file};
 use crate::api::map_service::{create_map, get_dimentions, refresh_map};
-use crate::api::movement_service::{process_input};
+use crate::api::_movement_service::{process_input};
 use crate::api::constants::{BOX_STR, WALL_U8, TARGET_STR, PLAYER_STR, QUIT, BOX_U8, BOX_ON_TARGET_STR, ERR_GETTING_INPUT, BOX_ON_TARGET_U8, TARGET_U8, PLAYER_U8, AIR_U8};
 use crate::api::utils::{delete_enters, is_object};
 use crate::api::ux::{print_map, show_goodbye, show_victory, show_welcome};

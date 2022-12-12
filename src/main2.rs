@@ -1,3 +1,5 @@
+// TODO Esto debería ir en un README
+
 //! # Sokoban
 //!
 //! ###### Santiago Czop - xxxxxxxxx@fi.uba.ar -xxxxxxxx
@@ -38,42 +40,35 @@
 mod api;
 mod front;
 
-use std::env::args;
 use std::env;
+use std::env::args;
 
-use api::WHAT_TO_RUN_POS;
+use api::{
+    client,
+    server::Server,
+    sokoban::{Sokoban, SokobanError},
+    constants::WHAT_TO_RUN_POS,
+};
 
-use crate::api::server;
-use crate::api::client;
-use crate::api::sokoban_service::{play, SokobanError};
-//use crate::front::window::run_app;
+fn main() -> Result<(), SokobanError> {
+    // todo generalizar error
 
-fn main() -> Result<(), SokobanError> { // todo generalizar error
     let argv = args().collect::<Vec<String>>();
 
-    match play(&argv[1]) { // todo mencionar como ventaja del lenguaje
-        Ok(_) => Ok(()),
-        Err(err) => Err(err)
-    }.expect("TODO: panic message");
-
-
-        //run_app().expect("TODO: panic message");
-    
-//fn main() -> std::io::Result<()> {
-//    let argv = args().collect::<Vec<String>>();
-    /*let map: Vec<String> = env::args().collect();
-
-    match play(&map[1]) { // todo mencionar como ventaja del lenguaje
-        //Ok(_) => run_app(),
-        Ok(_) => Ok(()),
-        Err(err) => Err(err)
-    }.expect("TODO: panic message");*/
-
-    /*if argv.len() > 1 && argv[WHAT_TO_RUN_POS] == "client" {
+    if argv.len() > 1 && argv[WHAT_TO_RUN_POS] == "client" {
         client::run().unwrap();
     } else {
-        server::run().unwrap();
-    }*/
+        let map: Vec<String> = env::args().collect();
+
+        let sokoban = match Sokoban::create_from_path(&map[1]) {
+            Ok(v) => v,
+            Err(e) => panic!("SokobanError"),
+        };
+
+        let s = Server::create_from_map(sokoban);
+
+        s.run();
+    }
 
     Ok(())
 }
