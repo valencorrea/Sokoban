@@ -14,6 +14,7 @@ pub const WALL_STR: &str = "#";
 pub const PLAYER_STR: &str = "P";
 pub const ENTER_STR: &str = "\r";
 pub const ENTER_STR2: &str = "\n";
+pub const TAB_STR: &str = "\t";
 
 pub const UP: &str = "W";
 pub const DOWN: &str = "S";

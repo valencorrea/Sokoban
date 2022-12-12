@@ -1,5 +1,9 @@
-use crate::api::_sokoban_service::Sokoban;
-use crate::api::constants::{AIR_STR, AIR_U8, BOX_ON_TARGET_STR, BOX_ON_TARGET_U8, BOX_STR, BOX_U8, ENTER_STR, ENTER_STR2, PLAYER_STR, PLAYER_U8, TARGET_STR, TARGET_U8, WALL_STR, WALL_U8};
+use crate::api::constants::{
+    AIR_STR, AIR_U8, BOX_ON_TARGET_STR, BOX_ON_TARGET_U8, BOX_STR, BOX_U8, ENTER_STR, ENTER_STR2,
+    PLAYER_STR, PLAYER_U8, TARGET_STR, TARGET_U8, WALL_STR, WALL_U8,
+};
+
+use super::sokoban::Sokoban;
 
 pub fn show_welcome() {
     println!("\nBienvenidos al Sokoban!\n");

@@ -45,14 +45,12 @@ use std::env::args;
 
 use api::{
     client,
+    constants::WHAT_TO_RUN_POS,
     server::Server,
     sokoban::{Sokoban, SokobanError},
-    constants::WHAT_TO_RUN_POS,
 };
 
 fn main() -> Result<(), SokobanError> {
-    // todo generalizar error
-
     let argv = args().collect::<Vec<String>>();
 
     if argv.len() > 1 && argv[WHAT_TO_RUN_POS] == "client" {
@@ -67,7 +65,7 @@ fn main() -> Result<(), SokobanError> {
 
         let s = Server::create_from_map(sokoban);
 
-        s.run();
+        s.run().unwrap();
     }
 
     Ok(())

@@ -1,12 +1,10 @@
-pub(crate) mod _sokoban_service;
-mod command_service;
-mod file_service;
-mod map_service;
-mod utils;
-mod ux;
-
 pub mod client;
+pub mod command_service;
 pub mod constants;
 pub mod coord_service;
-pub mod _movement_service;
+pub mod file_service;
 pub mod server;
+pub mod sokoban;
+pub mod sokoban_service;
+pub mod utils;
+pub mod ux;

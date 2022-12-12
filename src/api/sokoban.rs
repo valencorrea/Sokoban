@@ -5,6 +5,19 @@
 // TODO Traer get_dimentions
 // TODO Traer get_map
 
+use crate::api::{constants::ENTER_STR2, ux::get_object};
+
+use super::{
+    constants::{
+        AIR_U8, BOX_ON_TARGET_STR, BOX_ON_TARGET_U8, BOX_STR, BOX_U8, PLAYER_STR, PLAYER_U8,
+        TAB_STR, TARGET_STR, TARGET_U8, WALL_U8,
+    },
+    coord_service::{equals_to, get_deltas, get_next_coord, Coord},
+    file_service::{read_file, validate_file},
+    sokoban_service::{create_map, get_dimentions},
+    utils::{delete_enters, Move},
+};
+
 #[derive(Debug)]
 pub enum SokobanError {
     CoordError(String),
@@ -33,7 +46,7 @@ impl Sokoban {
 
         let (rows, columns) = get_dimentions(&input);
         let input = delete_enters(&mut input);
-        let mut map = create_map(input.clone(), rows, columns);
+        let map = create_map(input.clone(), rows, columns);
 
         let mut target_coords = get_coords(input.clone(), TARGET_STR, rows, columns)?;
         let boxes_on_target_coords = get_coords(input.clone(), BOX_ON_TARGET_STR, rows, columns)?;
@@ -54,22 +67,26 @@ impl Sokoban {
         })
     }
 
-    // TODO OK
-    pub fn print(&self) {
+    pub fn to_str(&self) -> String {
         let mut str_map = String::new();
         for row in 0..self.rows {
             for column in 0..self.columns {
                 let object = get_object(self.map[row][column]);
                 str_map.push(object.parse().unwrap());
             }
-            str_map.push_str(ENTER_STR2);
+            str_map.push_str(TAB_STR);
         }
 
-        println!("{}", str_map);
+        str_map
     }
 
     // TODO OK
-    fn refresh_map(&self, coords_from: &mut Coord, coords_to: &Coord, object: u8) {
+    pub fn print(&self) {
+        println!("{}", self.to_str());
+    }
+
+    // TODO OK
+    fn refresh_map(&mut self, coords_from: &Coord, coords_to: &Coord, object: u8) {
         self.map[coords_to.y][coords_to.x] = object;
 
         if self.target_coords.contains(coords_from) {
@@ -81,14 +98,14 @@ impl Sokoban {
 
     // TODO OK
     fn move_player(&mut self, coords_to: &Coord) {
-        self.refresh_map(self.user_coords, coords_to, PLAYER_U8);
-        update_coords(self.user_coords, coords_to);
+        self.refresh_map(&self.user_coords.to_owned(), coords_to, PLAYER_U8);
+        self.user_coords = coords_to.to_owned();
     }
 
     // TODO OK
     fn move_box(&mut self, coords_from: &mut Coord, coords_to: &mut Coord) {
-        let move_to_target = is_object(&coords_to, TARGET_U8, self.map);
-        let move_from_target = is_object(&coords_from, BOX_ON_TARGET_U8, self.map);
+        let move_to_target = self.is_object(&coords_to, TARGET_U8);
+        let move_from_target = self.is_object(&coords_from, BOX_ON_TARGET_U8);
 
         match self
             .boxes_coords
@@ -114,26 +131,26 @@ impl Sokoban {
     }
 
     // TODO OK
-    fn process_move(&mut self, movement: Move) {
+    pub fn process_move(&mut self, movement: Move) -> String {
         let (delta_x, delta_y) = get_deltas(movement);
-        let mut next_coord: Coord = get_next_coord(self.user_coords, delta_x, delta_y);
+        let mut next_coord: Coord = get_next_coord(&self.user_coords, delta_x, delta_y);
         let mut next_next_coord = get_next_coord(&next_coord, delta_x, delta_y);
 
         if self.is_object(&next_coord, WALL_U8) {
-            return;
+            return self.to_str();
         }
 
-        if self.is_object(&next_coord, BOX_U8)
-            || self.is_object(&next_coord, BOX_ON_TARGET_U8)
-        {
+        if self.is_object(&next_coord, BOX_U8) || self.is_object(&next_coord, BOX_ON_TARGET_U8) {
             if !(self.is_object(&next_next_coord, AIR_U8)
                 || self.is_object(&next_next_coord, TARGET_U8))
             {
-                return;
+                return self.to_str();
             }
-            sok.move_box(&mut next_coord, &mut next_next_coord);
+            self.move_box(&mut next_coord, &mut next_next_coord);
         }
-        sok.move_player(&next_coord);
+        self.move_player(&next_coord);
+
+        return self.to_str();
     }
 
     // TODO OK
@@ -145,8 +162,8 @@ impl Sokoban {
     pub fn victory(&self) -> bool {
         for box_coords in self.boxes_coords.iter() {
             let mut found = false;
-            for target in self.target_coords {
-                if equals_to(box_coords, target) {
+            for target in &self.target_coords {
+                if equals_to(box_coords, &target) {
                     found = true;
                     break;
                 }

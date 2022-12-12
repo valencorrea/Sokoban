@@ -1,9 +1,12 @@
-use crate::api::_sokoban_service::SokobanError;
-use crate::api::constants::{BOX_U8, WALL_U8, TARGET_U8, ENTER_U8, PLAYER_U8, AIR_U8, BOX_ON_TARGET_U8, ERR_FILE_FORMAT};
+use crate::api::command_service::valid_map_object;
+use crate::api::constants::{
+    AIR_U8, BOX_ON_TARGET_U8, BOX_U8, ENTER_U8, ERR_FILE_FORMAT, PLAYER_U8, TARGET_U8, WALL_U8,
+};
 use std::fs::File;
 use std::io::Read;
 use std::ops::Add;
-use crate::api::command_service::valid_map_object;
+
+use super::sokoban::SokobanError;
 
 pub fn read_file(path: &String) -> Result<String, SokobanError> {
     let f = File::open(path);
@@ -25,8 +28,7 @@ pub fn read_file(path: &String) -> Result<String, SokobanError> {
 
 pub fn validate_file(file: &String) -> Result<&String, SokobanError> {
     for char in file.as_bytes() {
-        if !valid_map_object(*char)
-        {
+        if !valid_map_object(*char) {
             return Err(SokobanError::FileError(ERR_FILE_FORMAT.to_string()));
         }
     }
