@@ -12,12 +12,11 @@ use super::{
     utils::{delete_enters, Move},
 };
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum SokobanError {
-    FileError(String),
-    GTKError(String),
-    CommandError(String),
-    ConnectionError(String),
+    File(String),
+    Command(String),
+    Connection(String),
 }
 
 #[derive(Debug)]
@@ -35,28 +34,28 @@ impl Sokoban {
         let map = read_file(argv)?;
         validate_file(&map)?;
 
-        let mut input = map.to_owned();
+        let mut input = map;
 
         let (rows, columns) = get_dimentions(&input);
         let input = delete_enters(&mut input);
         let map = create_map(input.clone(), rows, columns);
 
         let mut target_coords = get_coords(input.clone(), TARGET_STR, rows, columns)?;
-        let boxes_on_target_coords = get_coords(input.clone(), BOX_ON_TARGET_STR, rows, columns)?;
+        let mut boxes_on_target_coords = get_coords(input.clone(), BOX_ON_TARGET_STR, rows, columns)?;
         target_coords.append(&mut boxes_on_target_coords.clone());
 
         let boxes_coords = get_coords(input.clone(), BOX_STR, rows, columns)?;
-        target_coords.append(&mut boxes_on_target_coords.clone());
+        target_coords.append(&mut boxes_on_target_coords);
 
-        let mut vec_user_coords = get_coords(input.clone(), PLAYER_STR, rows, columns)?;
+        let mut vec_user_coords = get_coords(input, PLAYER_STR, rows, columns)?;
 
         Ok(Sokoban {
-            map: map,
+            map,
             user_coords: vec_user_coords.remove(0),
-            target_coords: target_coords,
-            boxes_coords: boxes_coords,
-            rows: rows,
-            columns: columns,
+            target_coords,
+            boxes_coords,
+            rows,
+            columns,
         })
     }
 
@@ -93,8 +92,8 @@ impl Sokoban {
     }
 
     fn move_box(&mut self, coords_from: &mut Coord, coords_to: &mut Coord) {
-        let move_to_target = self.is_object(&coords_to, TARGET_U8);
-        let move_from_target = self.is_object(&coords_from, BOX_ON_TARGET_U8);
+        let move_to_target = self.is_object(coords_to, TARGET_U8);
+        let move_from_target = self.is_object(coords_from, BOX_ON_TARGET_U8);
 
         match self
             .boxes_coords
@@ -138,18 +137,18 @@ impl Sokoban {
         }
         self.move_player(&next_coord);
 
-        return self.to_str();
+        self.to_str()
     }
 
     pub fn is_object(&self, next_coord: &Coord, object_to_compare: u8) -> bool {
-        return self.map[next_coord.y as usize][next_coord.x as usize] == object_to_compare;
+        self.map[next_coord.y as usize][next_coord.x as usize] == object_to_compare
     }
 
     pub fn victory(&self) -> bool {
         for box_coords in self.boxes_coords.iter() {
             let mut found = false;
             for target in &self.target_coords {
-                if equals_to(box_coords, &target) {
+                if equals_to(box_coords, target) {
                     found = true;
                     break;
                 }
@@ -158,7 +157,7 @@ impl Sokoban {
                 return false;
             }
         }
-        return true;
+        true
     }
 }
 
@@ -173,7 +172,7 @@ pub fn get_coords(
     let mut coord_vec = Vec::new();
 
     while row < rows && !map_string.is_empty() {
-        if map_string.remove(0).to_string() == object.to_string() {
+        if map_string.remove(0).to_string() == *object {
             let new_coord = Coord { x: column, y: row };
             coord_vec.push(new_coord);
         }

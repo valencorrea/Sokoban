@@ -2,7 +2,7 @@
 
 //! # Sokoban
 //!
-//! ###### Santiago Czop - xxxxxxxxx@fi.uba.ar -xxxxxxxx
+//! ###### Santiago Czop - sczop@fi.uba.ar - 104057
 //! ###### Carolina Di Matteo - cdimatteo@fi.uba.ar - 103963
 //! ###### Valentina Laura Correa - vcorrea@fi.uba.ar - 104415
 //! ______________
@@ -38,11 +38,9 @@
 //! - *cargo doc --open*: Abre la documentación en un archivo .html.
 
 mod api;
-mod front;
 
 use std::env::args;
-use std::thread;
-use std::{env, sync::mpsc::channel};
+use std::{env};
 
 use api::{
     client,
@@ -50,49 +48,21 @@ use api::{
     server::Server,
     sokoban::{Sokoban, SokobanError},
 };
-use front::window::run_app;
 
 fn main() -> Result<(), SokobanError> {
     let argv = args().collect::<Vec<String>>();
-
     if argv.len() > 1 && argv[WHAT_TO_RUN_POS] == "client" {
-        // GTK-CLIENT to SERVER
-        let (tx1, rx1) = channel();
-
-        // SERVER to CLIENT-GTK
-        let (tx2, rx2) = channel();
-
-        let client_thread = thread::spawn(move || {
-            if let Err(e) = client::run_from_gui(rx1, tx2) {
-                println!("[CLIENT] Can't run from GUI {:?}", e);
-            };
-        });
-
-        run_app(tx1, rx2);
-
-        let tid = client_thread.thread().id();
-
-        match client_thread.join() {
-            Ok(_) => println!("[CLIENT - THREAD MANAGEMENT]: Cleaning thread {:?}", tid),
-            Err(e) => println!(
-                "[SERVER - THREAD MANAGEMENT]: Couldn't clean thread {:?}, {:?}",
-                tid, e
-            ),
-        };
-
         client::run().unwrap();
     } else {
         let map: Vec<String> = env::args().collect();
 
         let sokoban = match Sokoban::create_from_path(&map[1]) {
             Ok(v) => v,
-            Err(_) => panic!("SokobanError"),
+            Err(error) => return Err(error),
         };
 
         let s = Server::create_from_map(sokoban);
-
         s.run().unwrap();
     }
-
     Ok(())
 }

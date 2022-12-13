@@ -1,6 +1,6 @@
 use super::utils::Move;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Coord {
     pub x: usize,
     pub y: usize,
@@ -30,9 +30,5 @@ pub fn get_next_coord(user_coords: &Coord, delta_x: i8, delta_y: i8) -> Coord {
 }
 
 pub fn equals_to(coord_1: &Coord, coord_2: &Coord) -> bool {
-    return if (coord_1.x == coord_2.x) && (coord_1.y == coord_2.y) {
-        true
-    } else {
-        false
-    };
+    (coord_1.x == coord_2.x) && (coord_1.y == coord_2.y)
 }

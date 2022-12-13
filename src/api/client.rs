@@ -1,22 +1,18 @@
-use core::time;
 use std::io::{BufRead, BufReader, Write};
-use std::net::{Shutdown, TcpStream};
-use std::sync::mpsc::{Receiver, Sender};
-use std::thread::JoinHandle;
+use std::net::{TcpStream};
 use std::{io, thread};
 
 use crate::api::constants::{ENTER_STR2, TAB_STR};
 use crate::api::utils::show_goodbye;
 
-use super::sokoban::{Sokoban, SokobanError};
 use super::utils::{ask_for_command, invalid_command, show_commands, show_victory, show_welcome};
 
 fn is_valid_input(input: String) -> bool {
-    if input.len() == 0 {
+    if input.is_empty() {
         return true;
     }
 
-    let s: Vec<&str> = input.split(" ").collect();
+    let s: Vec<&str> = input.split(' ').collect();
 
     if s[0] == "QUIT" {
         return true;
@@ -26,10 +22,10 @@ fn is_valid_input(input: String) -> bool {
         return false;
     }
 
-    return s[1] == "W" || s[1] == "A" || s[1] == "S" || s[1] == "D";
+    s[1] == "W" || s[1] == "A" || s[1] == "S" || s[1] == "D"
 }
 
-pub fn run() -> std::io::Result<()> {
+pub fn run() -> io::Result<()> {
     let mut end_game = false;
 
     show_welcome();
@@ -83,7 +79,7 @@ pub fn run() -> std::io::Result<()> {
             }
         };
 
-        if input.trim_end().to_owned() == "QUIT" {
+        if input.trim_end() == "QUIT" {
             end_game = true;
         }
     }
@@ -92,92 +88,5 @@ pub fn run() -> std::io::Result<()> {
 
     show_goodbye();
 
-    Ok(())
-}
-
-pub fn run_from_gui(rx: Receiver<String>, tx: Sender<String>) -> Result<(), SokobanError> {
-    show_welcome();
-
-    let stream: TcpStream = TcpStream::connect("127.0.0.1:7878").unwrap();
-
-    let stream_clone = match stream.try_clone() {
-        Ok(s) => s,
-        Err(_) => {
-            println!("[SERVER-CONNECTION] Unsuccesful creation of TCP connection");
-            return Ok(());
-        }
-    };
-
-    let thread = listen_from_gui(tx, stream_clone).unwrap();
-
-    let mut stream_clone = match stream.try_clone() {
-        Ok(s) => s,
-        Err(_) => {
-            println!("[SERVER-CONNECTION] Unsuccesful creation of TCP connection");
-            return Ok(());
-        }
-    };
-
-    while let Ok(mssg) = rx.recv_timeout(time::Duration::from_secs(10)) {
-        if let Err(e) = stream_clone.write_all(mssg.as_bytes()) {
-            println!("Can't send message to server: {:?}", e);
-            break;
-        }
-    }
-
-    thread.join();
-    Ok(())
-}
-
-fn listen_from_gui(tx: Sender<String>, stream: TcpStream) -> Result<JoinHandle<()>, SokobanError> {
-    let s = match stream.try_clone() {
-        Ok(v) => v,
-        Err(_) => {
-            tcp_destroy(stream)?;
-            return Err(SokobanError::ConnectionError(
-                "Can't create enough TCP streams to work properly".to_string(),
-            ));
-        }
-    };
-
-    let t = thread::spawn(move || {
-        let _ = stream.set_nonblocking(true);
-        let mut lines = BufReader::new(stream).lines();
-        loop {
-            if let Some(line) = lines.next() {
-                match line {
-                    Ok(p) => {
-                        if let Err(e) = tx.send(p) {
-                            println!("[CLIENT-MESSAGE SENDER] {:?}", e);
-                        }
-                    }
-                    Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {
-                        continue;
-                    }
-                    Err(_) => {
-                        println!("Disconnected from the server. Terminating [E1]");
-                        break;
-                    }
-                }
-            } else {
-                println!("Disconnected from the server. Terminating [E2]");
-                break;
-            }
-        }
-    });
-    Ok(t)
-}
-
-fn tcp_destroy(stream: TcpStream) -> Result<(), SokobanError> {
-    match stream.shutdown(Shutdown::Both) {
-        Ok(_) => {
-            println!("[CLIENT] Cleaned up TCP connection");
-        }
-        Err(_) => {
-            return Err(SokobanError::ConnectionError(
-                "Internal server error".to_string(),
-            ))
-        }
-    }
     Ok(())
 }
