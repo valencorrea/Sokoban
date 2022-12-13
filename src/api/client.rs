@@ -46,7 +46,7 @@ pub fn run() -> io::Result<()> {
         while !end_game {
             if let Some(Ok(l)) = lines.next() {
                 let line = l.replace(TAB_STR, ENTER_STR2);
-                println!("[SERVER]:{}{}", ENTER_STR2, line);
+                println!("{}{}", ENTER_STR2, line);
                 if line.contains("CLOSING") {
                     stream.shutdown(std::net::Shutdown::Both).unwrap();
                     end_game = true;
@@ -58,10 +58,12 @@ pub fn run() -> io::Result<()> {
         }
     });
 
+    show_commands();
+
     let mut input: String = String::new();
+
     while !end_game {
         input.clear();
-        show_commands();
         ask_for_command();
         io::stdin()
             .read_line(&mut input)
@@ -69,6 +71,7 @@ pub fn run() -> io::Result<()> {
 
         if !end_game && !is_valid_input(input.trim_end().to_owned()) {
             invalid_command();
+            show_commands();
             continue;
         }
 

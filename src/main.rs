@@ -20,9 +20,12 @@
 //! Para acceder al repositorio donde fue desarrollado el mismo
 //! se puede visitar el siguiente [enlace](https://github.com/valencorrea/Sokoban).
 //!
-//! ##### Ejecución
+//! ##### Ejecución [Exclusiva en LINUX]
 //! Para comenzar a utilizar el programa se deberá hacer uso del comando *cargo run* seguido
 //! de la ruta en donde se encuentra el archivo de entrada.
+//!
+//! Sólo se garantiza una correcta ejecución en Linux.
+//!
 //! En particular, los archivos de entrada estan dentro de la carpeta maps. De acuerdo al
 //! nivel seleccionado, será la dificultad que posea el juego.
 //!

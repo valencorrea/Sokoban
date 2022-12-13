@@ -44,7 +44,6 @@ pub fn show_victory() {
 
 pub fn invalid_command() {
     println!("Comando invalido.");
-    ask_for_command();
 }
 
 pub fn ask_for_command() {
