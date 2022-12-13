@@ -20,7 +20,8 @@ equipo docente, para luego ser presentado al resto de la clase a traves de un vi
 
 
 ### Ejecución
-[...]
+- cargo run maps/...
+- cargo run client
 
 Otros comandos de interes:
 - *cargo test*
