@@ -158,11 +158,11 @@ impl Server {
 
                 println!("[{}]: {} ", client_addr, line);
 
-                let request: Vec<&str> = line.split(" ").collect();
+                let request: Vec<&str> = line.split(' ').collect();
                 if request[0] == "QUIT" {
                     let response = String::from("CLOSING\n");
                     {
-                        let s = server.clone();
+                        let s = server;
 
                         let (q, cv) = &s.responses;
 
@@ -175,7 +175,7 @@ impl Server {
                     break;
                 } else if request[0] == "MOVE" {
                     let input = request[1];
-                    let movement: Move = process_input(&input);
+                    let movement: Move = process_input(input);
                     {
                         let s = server.clone();
 
@@ -210,7 +210,7 @@ impl Server {
 }
 
 pub fn process_input(input: &str) -> Move {
-    return if input == UP {
+    if input == UP {
         Move::Up
     } else if input == LEFT {
         Move::Left
@@ -218,5 +218,5 @@ pub fn process_input(input: &str) -> Move {
         Move::Down
     } else {
         Move::Right
-    };
+    }
 }

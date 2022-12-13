@@ -8,11 +8,11 @@ use crate::api::utils::show_goodbye;
 use super::utils::{ask_for_command, invalid_command, show_commands, show_victory, show_welcome};
 
 fn is_valid_input(input: String) -> bool {
-    if input.len() == 0 {
+    if input.is_empty() {
         return true;
     }
 
-    let s: Vec<&str> = input.split(" ").collect();
+    let s: Vec<&str> = input.split(' ').collect();
 
     if s[0] == "QUIT" {
         return true;
@@ -22,10 +22,10 @@ fn is_valid_input(input: String) -> bool {
         return false;
     }
 
-    return s[1] == "W" || s[1] == "A" || s[1] == "S" || s[1] == "D";
+    s[1] == "W" || s[1] == "A" || s[1] == "S" || s[1] == "D"
 }
 
-pub fn run() -> std::io::Result<()> {
+pub fn run() -> io::Result<()> {
     let mut end_game = false;
 
     show_welcome();
@@ -79,7 +79,7 @@ pub fn run() -> std::io::Result<()> {
             }
         };
 
-        if input.trim_end().to_owned() == "QUIT" {
+        if input.trim_end() == "QUIT" {
             end_game = true;
         }
     }

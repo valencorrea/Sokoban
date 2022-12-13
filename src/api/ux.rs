@@ -4,7 +4,7 @@ use crate::api::constants::{
 };
 
 pub fn get_object(map_object: u8) -> &'static str {
-    return if map_object == WALL_U8 {
+    if map_object == WALL_U8 {
         WALL_STR
     } else if map_object == PLAYER_U8 {
         PLAYER_STR
@@ -16,5 +16,5 @@ pub fn get_object(map_object: u8) -> &'static str {
         BOX_ON_TARGET_STR
     } else {
         AIR_STR
-    };
+    }
 }

@@ -2,7 +2,7 @@
 
 //! # Sokoban
 //!
-//! ###### Santiago Czop - xxxxxxxxx@fi.uba.ar -xxxxxxxx
+//! ###### Santiago Czop - sczop@fi.uba.ar - 104057
 //! ###### Carolina Di Matteo - cdimatteo@fi.uba.ar - 103963
 //! ###### Valentina Laura Correa - vcorrea@fi.uba.ar - 104415
 //! ______________
@@ -39,7 +39,8 @@
 
 mod api;
 
-use std::env::{self, args};
+use std::env;
+use std::env::args;
 
 use api::{
     client,
@@ -50,7 +51,6 @@ use api::{
 
 fn main() -> Result<(), SokobanError> {
     let argv = args().collect::<Vec<String>>();
-
     if argv.len() > 1 && argv[WHAT_TO_RUN_POS] == "client" {
         client::run().unwrap();
     } else {
@@ -58,13 +58,11 @@ fn main() -> Result<(), SokobanError> {
 
         let sokoban = match Sokoban::create_from_path(&map[1]) {
             Ok(v) => v,
-            Err(_) => panic!("SokobanError"),
+            Err(error) => return Err(error),
         };
 
         let s = Server::create_from_map(sokoban);
-
         s.run().unwrap();
     }
-
     Ok(())
 }
