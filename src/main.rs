@@ -23,13 +23,11 @@
 //! ##### Ejecución
 //! Para comenzar a utilizar el programa se deberá hacer uso del comando *cargo run* seguido
 //! de la ruta en donde se encuentra el archivo de entrada.
-//! En particular, los archivos de entrada estan dentro de */XXXXXXXXXXXXXXXX/*. De acuerdo al
+//! En particular, los archivos de entrada estan dentro de la carpeta maps. De acuerdo al
 //! nivel seleccionado, será la dificultad que posea el juego.
 //!
-//! *Ejemplo: cargo run xxxxxxxxxxxxxxx*
-//!
-//! XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-//! TODO ver bien cuando terminemos de implementar el server
+//! Para levantar server: cargo run api/maps/level...
+//! Para levantar cliente: cargo run client
 //!
 //! Otros comandos de interes:
 //! - *cargo test*: Corre todas las pruebas del proyecto, tanto las unitarias como las de integración.
