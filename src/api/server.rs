@@ -1,301 +1,222 @@
-/*use crate::api::file_service::read_file;
-use crate::api::movement_service::{process_input, process_move};
-use crate::api::sokoban_service::{Move, Sokoban, SokobanError};*/
-use std::io::{BufRead, BufReader, Write};
-use std::net::{TcpListener, TcpStream};
-use std::{io, thread};
-use crate::api::constants::MAP_01;
+use std::{
+    collections::VecDeque,
+    io::{BufRead, BufReader, Write},
+    net::{TcpListener, TcpStream},
+    sync::{Arc, Condvar, Mutex},
+    thread::{self, JoinHandle},
+    time::Duration,
+};
 
-struct Coord {
-    x: u8,
-    y: u8,
+use super::{
+    constants::{DOWN, LEFT, UP},
+    sokoban::Sokoban,
+    utils::Move,
+};
+
+#[derive(Debug)]
+pub struct Server {
+    sokoban: Mutex<Sokoban>,
+    thr_clients: Mutex<Vec<JoinHandle<()>>>,
+    tcp_clients: Mutex<Vec<TcpStream>>,
+    responses: (Mutex<VecDeque<String>>, Condvar),
 }
 
-enum Move {
-    Up,
-    Left,
-    Down,
-    Right,
-}
+impl Server {
+    pub fn create_from_map(sokoban: Sokoban) -> Server {
+        Server {
+            sokoban: Mutex::new(sokoban),
+            thr_clients: Mutex::new(Vec::new()),
+            tcp_clients: Mutex::new(Vec::new()),
+            responses: (Mutex::new(VecDeque::<String>::new()), Condvar::new()),
+        }
+    }
 
-fn victory(boxes_coords: &[Coord; 7], boxes_targets: &[Coord; 7]) -> bool {
-    for box_coords in boxes_coords.iter() {
-        let mut placed: bool = false;
-        for box_target in boxes_targets.iter() {
-            if box_coords.x == box_target.x && box_coords.y == box_target.y {
-                placed = true;
+    pub fn run(self) -> std::io::Result<()> {
+        let s = Arc::new(self);
+
+        let ss = s.clone();
+
+        let listener = TcpListener::bind("0.0.0.0:7878")?;
+
+        let closing = Arc::new(Mutex::new(false));
+
+        listener.set_nonblocking(true).unwrap();
+
+        println!("[SERVER] - Listening for connections on port 7878");
+
+        let cc = closing.clone();
+        let cc2 = closing.clone();
+
+        let responses_thread = thread::spawn(move || loop {
+            let (responses, cv) = &ss.responses;
+            let mut responses = responses.lock().unwrap();
+            while responses.is_empty() {
+                responses = cv.wait(responses).unwrap();
+            }
+
+            let response = responses.pop_front().unwrap();
+            for tcp in ss.tcp_clients.lock().unwrap().iter() {
+                let mut stream_clone = tcp.clone();
+
+                stream_clone.write_all(response.as_bytes()).unwrap();
+            }
+
+            let mut ccc = cc.lock().unwrap();
+
+            if response.contains("VICTORY") || response.contains("CLOSING") {
+                *ccc = true;
+
+                let mut to_close = ss.tcp_clients.lock().unwrap();
+
+                while let Some(pop) = to_close.pop() {
+                    pop.shutdown(std::net::Shutdown::Both).unwrap();
+                }
+
+                println!("[SERVER] - Finished closing TCPs");
+
+                let mut to_join = ss.thr_clients.lock().unwrap();
+
+                while let Some(pop) = to_join.pop() {
+                    pop.join().unwrap();
+                }
+
+                println!("[SERVER] - Finished joining threads");
+            }
+
+            if *ccc {
                 break;
             }
-        }
-        if !placed {
-            return false;
-        }
-    }
-    return true;
-}
-
-fn print_map(
-    map: &[[u8; 8]; 9],
-    boxes_coords: &[Coord; 7],
-    boxes_targets: &[Coord; 7],
-    player_coords: &Coord,
-) {
-    for j in 0..map.len() {
-        let row: &[u8; 8] = &map[j];
-        for i in 0..row.len() {
-            let cell: u8 = row[i];
-            let coord: Coord = Coord {
-                x: i as u8,
-                y: j as u8,
-            };
-            if cell == 1 {
-                print!("#");
-            } else if is_player(&coord, &player_coords) {
-                print!("P");
-            } else if is_box(&coord, &boxes_coords) {
-                if is_target(&coord, &boxes_targets) {
-                    print!("*");
-                } else {
-                    print!("=");
-                }
-            } else if is_target(&coord, &boxes_targets) {
-                print!("+");
-            } else {
-                print!(" ");
-            }
-            print!(" ");
-        }
-        println!("");
-    }
-}
-
-fn get_user_input() -> String {
-    let mut input: String = String::new();
-    loop {
-        input.clear();
-        println!("Escribe tu movimiento (WASD) o Q para cerrar el juego:");
-        io::stdin()
-            .read_line(&mut input)
-            .expect("Failed to read line");
-
-        let trimmed_len: usize = input.trim_end().len();
-        input.truncate(trimmed_len);
-
-        if is_valid_input(&input) {
-            return input;
-        }
-    }
-}
-
-fn is_valid_input(input: &String) -> bool {
-    return input == "W" || input == "A" || input == "S" || input == "D" || input == "Q";
-}
-
-fn process_input(input: &str) -> Move {
-    if input == "W" {
-        return Move::Up;
-    } else if input == "A" {
-        return Move::Left;
-    } else if input == "S" {
-        return Move::Down;
-    } else {
-        return Move::Right;
-    }
-}
-
-fn process_move(
-    map: &[[u8; 8]; 9],
-    boxes_coords: &mut [Coord; 7],
-    player_coords: &mut Coord,
-    movement: Move,
-) {
-    let mut delta_x: i8 = 0;
-    let mut delta_y: i8 = 0;
-    match movement {
-        Move::Up => delta_y = -1,
-        Move::Left => delta_x = -1,
-        Move::Down => delta_y = 1,
-        Move::Right => delta_x = 1,
-    }
-
-    let coord_in_direction: Coord = Coord {
-        x: (player_coords.x as i8 + delta_x) as u8,
-        y: (player_coords.y as i8 + delta_y) as u8,
-    };
-
-    let coord_in_past_direction: Coord = Coord {
-        x: (player_coords.x as i8 + delta_x * 2) as u8,
-        y: (player_coords.y as i8 + delta_y * 2) as u8,
-    };
-
-    if is_wall(&coord_in_direction, &map) {
-        return;
-    } else if is_box(&coord_in_direction, &boxes_coords) {
-        if is_wall(&coord_in_past_direction, &map) {
-            return;
-        } else if is_box(&coord_in_past_direction, &boxes_coords) {
-            return;
-        } else {
-            move_player(player_coords, &coord_in_direction);
-            move_box(boxes_coords, &coord_in_direction, &coord_in_past_direction);
-        }
-    } else {
-        move_player(player_coords, &coord_in_direction);
-        return;
-    }
-}
-
-fn is_wall(coords: &Coord, map: &[[u8; 8]; 9]) -> bool {
-    return map[coords.y as usize][coords.x as usize] == 1;
-}
-
-fn is_player(coord: &Coord, player_coords: &Coord) -> bool {
-    if coord.x == player_coords.x && coord.y == player_coords.y {
-        return true;
-    } else {
-        return false;
-    }
-}
-
-fn is_box(coord: &Coord, boxes_coords: &[Coord; 7]) -> bool {
-    for box_coords in boxes_coords.iter() {
-        if coord.x == box_coords.x && coord.y == box_coords.y {
-            return true;
-        }
-    }
-    return false;
-}
-
-fn is_target(coord: &Coord, boxes_targets: &[Coord; 7]) -> bool {
-    for box_target in boxes_targets.iter() {
-        if coord.x == box_target.x && coord.y == box_target.y {
-            return true;
-        }
-    }
-    return false;
-}
-
-fn move_player(player_coords: &mut Coord, new_cord: &Coord) {
-    player_coords.x = new_cord.x;
-    player_coords.y = new_cord.y;
-}
-
-fn move_box(boxes_coords: &mut [Coord; 7], box_coords: &Coord, box_new_coords: &Coord) {
-    for boxx in boxes_coords.iter_mut() {
-        if boxx.x == box_coords.x && boxx.y == box_coords.y {
-            boxx.x = box_new_coords.x;
-            boxx.y = box_new_coords.y;
-            return;
-        }
-    }
-}
-
-pub fn run() -> std::io::Result<()> {
-    let listener = TcpListener::bind("0.0.0.0:7878")?;
-
-    println!("[SERVER] - Listening for connections on port 7878");
-
-    for stream in listener.incoming() {
-        let stream = stream?;
-        thread::spawn(move || {
-            handle_client(stream);
         });
-        
-    }
-    Ok(())
-}
 
-fn handle_client(stream: TcpStream) {
-    let client_addr = match stream.peer_addr() {
-        Ok(sa) => sa.to_string(),
-        Err(_) => "Unknown".to_owned(),
-    };
-
-    println!("New Connection: {}", client_addr);
-
-    let mut stream_clone = match stream.try_clone() {
-        Ok(s) => s,
-        Err(_) => {
-            println!("[SERVER-CONNECTION] Unsuccesful creation of TCP connection");
-            return;
-        }
-    };
-
-    let buf_reader = BufReader::new(stream);
-    let mut lines = buf_reader.lines();
-
-    let map = MAP_01;
-
-    let mut player_coords: Coord = Coord { x: 2, y: 2 };
-
-    let mut boxes_coords: [Coord; 7] = [
-        Coord { x: 3, y: 2 },
-        Coord { x: 4, y: 3 },
-        Coord { x: 4, y: 4 },
-        Coord { x: 1, y: 6 },
-        Coord { x: 3, y: 6 },
-        Coord { x: 4, y: 6 },
-        Coord { x: 5, y: 6 },
-    ];
-
-    let boxes_targets: [Coord; 7] = [
-        Coord { x: 1, y: 2 },
-        Coord { x: 5, y: 3 },
-        Coord { x: 1, y: 4 },
-        Coord { x: 4, y: 5 },
-        Coord { x: 3, y: 6 },
-        Coord { x: 6, y: 6 },
-        Coord { x: 4, y: 7 },
-    ];
-
-    print_map(&map, &boxes_coords, &boxes_targets, &player_coords);
-
-    loop {
-        if let Some(l) = lines.next() {
-            let line = match l {
-                Ok(p) => p,
-                Err(_) => {
-                    break;
+        for stream in listener.incoming() {
+            let stream = match stream {
+                Ok(v) => v,
+                Err(e) => {
+                    if *cc2.lock().unwrap() {
+                        break;
+                    }
+                    continue;
                 }
             };
 
-            println!("[{}]: {} ", client_addr, line);
-
-            let request: Vec<&str> = line.split(" ").collect();
-            if request[0] == "QUIT" {
-                let response = String::from("CLOSING");
-                stream_clone.write_all(response.as_bytes());
+            if *closing.lock().unwrap() {
                 break;
-            } else if request[0] == "MOVE" {
-                let input = request[1];
-                let movement: Move = process_input(&input);
-                process_move(&map, &mut boxes_coords, &mut player_coords, movement);
-                print_map(&map, &boxes_coords, &boxes_targets, &player_coords);
-                if victory(&boxes_coords, &boxes_targets) {
-                    let response = String::from(
-                        "Felicitaciones! Has vencido el juego. Gracias por jugar.\n",
-                    );
-                    stream_clone.write_all(response.as_bytes());
+            }
+
+            let stream_clone = stream.try_clone().unwrap();
+            let ss = s.clone();
+            let t = thread::spawn(move || {
+                Server::handle_client(ss, stream);
+            });
+
+            {
+                let mut c_thr = s.thr_clients.lock().unwrap();
+
+                let mut c_tcp = s.tcp_clients.lock().unwrap();
+
+                c_thr.push(t);
+
+                c_tcp.push(stream_clone);
+            }
+
+            thread::sleep(Duration::from_secs(1));
+        }
+
+        responses_thread.join().unwrap();
+
+        Ok(())
+    }
+
+    fn handle_client(server: Arc<Server>, stream: TcpStream) {
+        {
+            let mut map = server.sokoban.lock().unwrap().to_str();
+            map.push('\n');
+
+            let mut st = stream.try_clone().unwrap();
+
+            st.write_all(map.as_bytes()).unwrap();
+        }
+
+        let client_addr = match stream.peer_addr() {
+            Ok(sa) => sa.to_string(),
+            Err(_) => "Unknown".to_owned(),
+        };
+
+        println!("[SERVER] - New Connection: {}", client_addr);
+
+        let buf_reader = BufReader::new(stream);
+        let mut lines = buf_reader.lines();
+
+        loop {
+            if let Some(l) = lines.next() {
+                let line = match l {
+                    Ok(p) => p,
+                    Err(_) => {
+                        break;
+                    }
+                };
+
+                println!("[{}]: {} ", client_addr, line);
+
+                let request: Vec<&str> = line.split(' ').collect();
+                if request[0] == "QUIT" {
+                    let response = String::from("CLOSING\n");
+                    {
+                        let s = server;
+
+                        let (q, cv) = &s.responses;
+
+                        let mut q = q.lock().unwrap();
+
+                        q.push_back(response);
+
+                        cv.notify_one();
+                    }
                     break;
+                } else if request[0] == "MOVE" {
+                    let input = request[1];
+                    let movement: Move = process_input(input);
+                    {
+                        let s = server.clone();
+
+                        let mut sok = s.sokoban.lock().unwrap();
+
+                        let (q, cv) = &s.responses;
+
+                        let mut q = q.lock().unwrap();
+
+                        let mut response = sok.process_move(movement);
+                        response.push('\n');
+
+                        if sok.victory() {
+                            let response = String::from("VICTORY");
+                            q.push_back(response);
+                            cv.notify_one();
+                            break;
+                        }
+
+                        q.push_back(response);
+
+                        cv.notify_one();
+                    }
                 }
-                let response = String::from("OK\n");
-                stream_clone.write_all(response.as_bytes());
+            } else {
+                break;
             }
         }
+
+        println!("[SERVER]: READY TO JOIN");
     }
-    println!("READY TO JOIN");
 }
 
-/*fn process_request(&mut self, client_request: String) -> String {
-    let request: Vec<&str> = client_request.split(" ").collect();
-    if request[0] == "QUIT" {
-        return String::from("QUIT\n");
-    } else if request[0] == "MOVE" {
-        let dir = request[1];
-        let movement: Move = process_input(dir);
-        process_move(&mut self.sokoban, movement);
-        return String::from("MOVING!\n");
+pub fn process_input(input: &str) -> Move {
+    if input == UP {
+        Move::Up
+    } else if input == LEFT {
+        Move::Left
+    } else if input == DOWN {
+        Move::Down
     } else {
-        return String::from("Bad request\n");
+        Move::Right
     }
-}*/
+}

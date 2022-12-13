@@ -1,6 +1,8 @@
+// TODO Esto debería ir en un README
+
 //! # Sokoban
 //!
-//! ###### Santiago Czop - xxxxxxxxx@fi.uba.ar -xxxxxxxx
+//! ###### Santiago Czop - sczop@fi.uba.ar - 104057
 //! ###### Carolina Di Matteo - cdimatteo@fi.uba.ar - 103963
 //! ###### Valentina Laura Correa - vcorrea@fi.uba.ar - 104415
 //! ______________
@@ -36,44 +38,31 @@
 //! - *cargo doc --open*: Abre la documentación en un archivo .html.
 
 mod api;
-mod front;
 
-use std::env::args;
 use std::env;
+use std::env::args;
 
-use api::WHAT_TO_RUN_POS;
+use api::{
+    client,
+    constants::WHAT_TO_RUN_POS,
+    server::Server,
+    sokoban::{Sokoban, SokobanError},
+};
 
-use crate::api::server;
-use crate::api::client;
-use crate::api::sokoban_service::{play, SokobanError};
-//use crate::front::window::run_app;
-
-fn main() -> Result<(), SokobanError> { // todo generalizar error
+fn main() -> Result<(), SokobanError> {
     let argv = args().collect::<Vec<String>>();
-
-    match play(&argv[1]) { // todo mencionar como ventaja del lenguaje
-        Ok(_) => Ok(()),
-        Err(err) => Err(err)
-    }.expect("TODO: panic message");
-
-
-        //run_app().expect("TODO: panic message");
-    
-//fn main() -> std::io::Result<()> {
-//    let argv = args().collect::<Vec<String>>();
-    /*let map: Vec<String> = env::args().collect();
-
-    match play(&map[1]) { // todo mencionar como ventaja del lenguaje
-        //Ok(_) => run_app(),
-        Ok(_) => Ok(()),
-        Err(err) => Err(err)
-    }.expect("TODO: panic message");*/
-
-    /*if argv.len() > 1 && argv[WHAT_TO_RUN_POS] == "client" {
+    if argv.len() > 1 && argv[WHAT_TO_RUN_POS] == "client" {
         client::run().unwrap();
     } else {
-        server::run().unwrap();
-    }*/
+        let map: Vec<String> = env::args().collect();
 
+        let sokoban = match Sokoban::create_from_path(&map[1]) {
+            Ok(v) => v,
+            Err(error) => return Err(error),
+        };
+
+        let s = Server::create_from_map(sokoban);
+        s.run().unwrap();
+    }
     Ok(())
 }
