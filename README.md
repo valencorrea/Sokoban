@@ -5,7 +5,7 @@
 |------------------------|--------|---------------------|--------------------------------------------|
 | Carolina Di Matteo     | 103963 | cdimatteo@fi.uba.ar | [GitHub](https://github.com/gcc-cdimatteo) |
 | Valentina Laura Correa | 104415 | vcorrea@fi.uba.ar   | [GitHub](https://github.com/valencorrea)   |
-| Santiago Czop          |        |                     |                                            | 
+| Santiago Czop          | 104057 | sczop@fi.uba.ar     | [GitHub](https://github.com/Santiago-Czop) | 
 
 ### Introducción
 La presente entrega contiene los requerimientos pedidos para el trabajo practico grupal de la materia Teoria del Lenguaje - curso Ferrigno.
