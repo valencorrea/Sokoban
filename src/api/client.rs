@@ -1,14 +1,10 @@
-use core::time;
 use std::io::{BufRead, BufReader, Write};
-use std::net::{Shutdown, TcpStream};
-use std::sync::mpsc::{Receiver, Sender};
-use std::thread::JoinHandle;
+use std::net::TcpStream;
 use std::{io, thread};
 
 use crate::api::constants::{ENTER_STR2, TAB_STR};
 use crate::api::utils::show_goodbye;
 
-use super::sokoban::{Sokoban, SokobanError};
 use super::utils::{ask_for_command, invalid_command, show_commands, show_victory, show_welcome};
 
 fn is_valid_input(input: String) -> bool {
@@ -92,19 +88,5 @@ pub fn run() -> std::io::Result<()> {
 
     show_goodbye();
 
-    Ok(())
-}
-
-fn tcp_destroy(stream: TcpStream) -> Result<(), SokobanError> {
-    match stream.shutdown(Shutdown::Both) {
-        Ok(_) => {
-            println!("[CLIENT] Cleaned up TCP connection");
-        }
-        Err(_) => {
-            return Err(SokobanError::ConnectionError(
-                "Internal server error".to_string(),
-            ))
-        }
-    }
     Ok(())
 }

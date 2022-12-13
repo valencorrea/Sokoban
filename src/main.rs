@@ -38,11 +38,8 @@
 //! - *cargo doc --open*: Abre la documentación en un archivo .html.
 
 mod api;
-mod front;
 
-use std::env::args;
-use std::thread;
-use std::{env, sync::mpsc::channel};
+use std::env::{self, args};
 
 use api::{
     client,
@@ -50,7 +47,6 @@ use api::{
     server::Server,
     sokoban::{Sokoban, SokobanError},
 };
-use front::window::run_app;
 
 fn main() -> Result<(), SokobanError> {
     let argv = args().collect::<Vec<String>>();

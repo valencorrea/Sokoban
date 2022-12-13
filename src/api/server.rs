@@ -4,6 +4,7 @@ use std::{
     net::{TcpListener, TcpStream},
     sync::{Arc, Condvar, Mutex},
     thread::{self, JoinHandle},
+    time::Duration,
 };
 
 use super::{
@@ -35,6 +36,17 @@ impl Server {
 
         let ss = s.clone();
 
+        let listener = TcpListener::bind("0.0.0.0:7878")?;
+
+        let closing = Arc::new(Mutex::new(false));
+
+        listener.set_nonblocking(true).unwrap();
+
+        println!("[SERVER] - Listening for connections on port 7878");
+
+        let cc = closing.clone();
+        let cc2 = closing.clone();
+
         let responses_thread = thread::spawn(move || loop {
             let (responses, cv) = &ss.responses;
             let mut responses = responses.lock().unwrap();
@@ -49,30 +61,48 @@ impl Server {
                 stream_clone.write_all(response.as_bytes()).unwrap();
             }
 
-            if response.contains("VICTORY") {
+            let mut ccc = cc.lock().unwrap();
+
+            if response.contains("VICTORY") || response.contains("CLOSING") {
+                *ccc = true;
+
                 let mut to_close = ss.tcp_clients.lock().unwrap();
 
                 while let Some(pop) = to_close.pop() {
                     pop.shutdown(std::net::Shutdown::Both).unwrap();
                 }
 
-                println!("Finished closing TCPs");
+                println!("[SERVER] - Finished closing TCPs");
 
                 let mut to_join = ss.thr_clients.lock().unwrap();
 
                 while let Some(pop) = to_join.pop() {
                     pop.join().unwrap();
                 }
-                println!("Finished joining threads");
+
+                println!("[SERVER] - Finished joining threads");
+            }
+
+            if *ccc {
+                break;
             }
         });
 
-        let listener = TcpListener::bind("0.0.0.0:7878")?;
-
-        println!("[SERVER] - Listening for connections on port 7878");
-
         for stream in listener.incoming() {
-            let stream = stream?;
+            let stream = match stream {
+                Ok(v) => v,
+                Err(e) => {
+                    if *cc2.lock().unwrap() {
+                        break;
+                    }
+                    continue;
+                }
+            };
+
+            if *closing.lock().unwrap() {
+                break;
+            }
+
             let stream_clone = stream.try_clone().unwrap();
             let ss = s.clone();
             let t = thread::spawn(move || {
@@ -88,6 +118,8 @@ impl Server {
 
                 c_tcp.push(stream_clone);
             }
+
+            thread::sleep(Duration::from_secs(1));
         }
 
         responses_thread.join().unwrap();
@@ -110,7 +142,7 @@ impl Server {
             Err(_) => "Unknown".to_owned(),
         };
 
-        println!("New Connection: {}", client_addr);
+        println!("[SERVER] - New Connection: {}", client_addr);
 
         let buf_reader = BufReader::new(stream);
         let mut lines = buf_reader.lines();
@@ -128,7 +160,7 @@ impl Server {
 
                 let request: Vec<&str> = line.split(" ").collect();
                 if request[0] == "QUIT" {
-                    let response = String::from("CLOSING");
+                    let response = String::from("CLOSING\n");
                     {
                         let s = server.clone();
 
@@ -168,10 +200,12 @@ impl Server {
                         cv.notify_one();
                     }
                 }
+            } else {
+                break;
             }
         }
 
-        println!("READY TO JOIN");
+        println!("[SERVER]: READY TO JOIN");
     }
 }
 
